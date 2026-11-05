@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Updates — WVU Home Base</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .updates-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    @media (max-width: 750px) {
+      .updates-layout { grid-template-columns: 1fr; }
+      .sidebar { display: flex; flex-wrap: wrap; gap: 0.5rem; flex-direction: row; }
+    }
+
+    /* Sidebar filter */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .sidebar-label {
+      font-size: 0.45rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.25rem;
+    }
+
+    .filter-btn {
+      text-align: left;
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--muted);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.45rem;
+      cursor: pointer;
+      transition: none;
+      font-family: var(--pixel-font);
+      letter-spacing: 0.5px;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--wvu-gold);
+      color: var(--wvu-gold);
+      background: rgba(234,170,0,0.07);
+      box-shadow: 2px 2px 0 var(--border-gold);
+    }
+
+    /* Feed */
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .post-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 1.1rem 1.25rem;
+      transition: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .post-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--wvu-gold);
+      border-radius: 4px 0 0 4px;
+    }
+
+    .post-card.dept-cs::before  { background: #7b7bff; }
+    .post-card.dept-ee::before  { background: #4de8a0; }
+    .post-card.dept-cpe::before { background: #EAAA00; }
+    .post-card.dept-cybe::before{ background: #ff7b7b; }
+
+    .post-card:hover {
+      border-color: var(--wvu-gold);
+      box-shadow: 3px 0 0 var(--wvu-gold);
+    }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .post-meta time {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .post-title {
+      font-size: 0.6rem;
+      color: var(--text);
+      margin-bottom: 0.55rem;
+      line-height: 1.8;
+    }
+
+    .post-body {
+      font-size: 0.48rem;
+      color: var(--muted);
+      line-height: 2;
+    }
+
+    .post-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .event-detail {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* Add post FAB */
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--wvu-gold);
+      color: var(--wvu-dark);
+      border: none;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(234,170,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-weight: 700;
+      z-index: 50;
+    }
+
+    .fab:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 6px 28px rgba(234,170,0,0.6);
+    }
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .search-bar input {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="back-btn">← Hub</a>
+  <div class="topbar-logo" style="margin-left:0.5rem">
+    <svg height="22" viewBox="0 0 287.90668 249.06667" style="vertical-align:middle;margin-right:7px;display:inline-block;flex-shrink:0">
+      <g transform="matrix(1.3333333,0,0,-1.3333333,0,249.06667)"><g transform="scale(0.1)">
+        <path fill="#EAAA00" d="m 2068.85,1867.99 h -332.91 l -19.98,-0.18 c -61.48,1.05 -83.77,-21.9 -102.23,-50.18 l -261.58,-387.69 -250.26,379.88 -8.35,12.46 c 0,0 -6.86,11.15 -18.87,11.49 v 0.02 c -0.02,0 -0.04,-0.01 -0.04,-0.01 0,0 -0.03,0.01 -0.04,0.01 v -0.02 c -12.01,-0.34 -18.87,-11.49 -18.87,-11.49 l -8.36,-12.46 -242.087,-379.88 -269.75,387.69 c -18.437,28.28 -40.726,51.23 -102.222,50.18 l -19.988,0.18 H 80.4141 L 80.3125,1551.48 H 276.363 c 41.27,0.41 60.43,-1.54 88.739,-35.52 l 11.738,-17.24 395.609,-619.814 c 0,0 12.883,-19.976 34.735,-20.086 23.578,-0.101 36.648,20.188 36.648,20.188 l 230.758,345.742 v -0.01 l 0.04,0.06 0.04,-0.06 v 0.01 l 239.59,-345.305 c 0,0 13.53,-20.465 33.86,-20.957 21.85,-0.539 33.89,20.481 33.89,20.481 l 390.41,619.751 11.74,17.24 c 20.18,31.69 45.76,35.01 87.03,34.59 l 197.66,0.93 v 316.51"/>
+        <path fill="#EAAA00" d="M 1566.86,981.309 1353.46,642.91 1078.71,1041.59 867.063,730.289 1313.07,30.5313 c 15.39,-26.30083 27.59,-30.222706 33.88,-30.50005 13.47,-0.589844 21.25,6.62891 35.93,31.08985 L 1733.09,670.18 c 31.16,55.441 83.18,54.73 83.18,54.73 h 252.58 v 316.12 h -394.28 c -71.8,0 -107.71,-59.721 -107.71,-59.721"/>
+      </g></g>
+    </svg>
+    LCSEE <span>// UPDATES</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html"      class="nav-pill">[ HUB ]</a>
+    <a href="updates.html"    class="nav-pill active">[ UPDATES ]</a>
+    <a href="flashcards.html" class="nav-pill">[ CARDS ]</a>
+    <a href="tasks.html"      class="nav-pill">[ TASKS ]</a>
+    <a href="planner.html"    class="nav-pill">[ PLANNER ]</a>
+    <a href="gpa.html"        class="nav-pill">[ GPA ]</a>
+    <a href="resources.html"  class="nav-pill">[ RESOURCES ]</a>
+  </nav>
+</header>
+
+<div class="page-header" style="max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 1rem">
+  <h1>MAJOR UPDATES</h1>
+  <p>Club meetings, speakers, and announcements for CS · EE · CpE · CYBE</p>
+</div>
+
+<div class="updates-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Filter By</div>
+    <button class="filter-btn active" onclick="filterPosts('all', this)">🏫 All Depts</button>
+    <button class="filter-btn" onclick="filterPosts('cs',   this)">[ CS ]</button>
+    <button class="filter-btn" onclick="filterPosts('ee',   this)">[ EE ]</button>
+    <button class="filter-btn" onclick="filterPosts('cpe',  this)">[ CPE ]</button>
+    <button class="filter-btn" onclick="filterPosts('cybe', this)">[ CYBE ]</button>
+    <hr class="divider" />
+    <div class="sidebar-label">Type</div>
+    <button class="filter-btn" onclick="filterType('club', this)">🤝 Club Meeting</button>
+    <button class="filter-btn" onclick="filterType('speaker', this)">🎤 Speaker</button>
+    <button class="filter-btn" onclick="filterType('event', this)">🎉 Event</button>
+    <button class="filter-btn" onclick="filterType('deadline', this)">⏰ Deadline</button>
+  </aside>
+
+  <!-- Feed -->
+  <section>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search announcements…" oninput="searchPosts()" />
+    </div>
+    <div class="feed" id="feed"></div>
+  </section>
+
+</div>
+
+<!-- Add Post FAB -->
+<button class="fab" onclick="openModal()" title="Post Announcement">+</button>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Post Announcement</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="postTitle" placeholder="e.g. IEEE Meeting This Thursday" />
+    </div>
+    <div class="form-group">
+      <label>Details</label>
+      <textarea id="postBody" placeholder="Describe the event, location, time…"></textarea>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Major</label>
+        <select id="postDept">
+          <option value="cs">Computer Science</option>
+          <option value="ee">Electrical Engineering</option>
+          <option value="cpe">Computer Engineering</option>
+          <option value="cybe">Cyber Security</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="postType">
+          <option value="club">Club Meeting</option>
+          <option value="speaker">Speaker</option>
+          <option value="event">Event</option>
+          <option value="deadline">Deadline</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="postDate" />
+      </div>
+      <div class="form-group">
+        <label>Time</label>
+        <input type="time" id="postTime" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Location</label>
+      <input type="text" id="postLocation" placeholder="e.g. ESB 302" />
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn-gold" onclick="submitPost()">Post</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { api, apiError } from './api.js';
+
+const DEPT_LABELS = { cs:'CS', ee:'EE', cpe:'CPE', cybe:'CYBE', all:'ALL' };
+const TYPE_ICONS  = { club:'🤝', speaker:'🎤', event:'🎉', deadline:'⏰' };
+const TYPE_LABELS = { club:'Club Meeting', speaker:'Speaker', event:'Event', deadline:'Deadline' };
+
+let posts = [];
+let activeFilter = 'all';
+let activeType   = null;
+
+async function loadFeed() {
+  const params = new URLSearchParams();
+  if (activeFilter !== 'all') params.set('major', activeFilter);
+  if (activeType)             params.set('post_type', activeType);
+  const q = document.getElementById('searchInput')?.value?.trim();
+  if (q) params.set('search', q);
+  try {
+    posts = await api.get(`/updates?${params}`);
+    renderFeed();
+  } catch(e) { apiError(e); }
+}
+
+function filterPosts(dept, btn) {
+  activeFilter = dept;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadFeed();
+}
+window.filterPosts = filterPosts;
+
+function filterType(type, btn) {
+  activeType = activeType === type ? null : type;
+  document.querySelectorAll('.filter-btn').forEach(b => { if (!b.onclick?.toString().includes('filterPosts')) b.classList.remove('active'); });
+  if (activeType) btn.classList.add('active');
+  loadFeed();
+}
+window.filterType = filterType;
+
+window.searchPosts = loadFeed;
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  if (!posts.length) {
+    feed.innerHTML = '<div class="empty-state"><span class="icon">📭</span>No announcements found.</div>';
+    return;
+  }
+  feed.innerHTML = posts.map(p => {
+    const dt = p.event_date ? new Date(p.event_date + 'T12:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+    return `
+    <div class="post-card dept-${p.major}" data-id="${p.id}">
+      <div class="post-meta">
+        <span class="tag">${DEPT_LABELS[p.major] || p.major}</span>
+        <span class="tag blue">${TYPE_ICONS[p.post_type] || ''} ${TYPE_LABELS[p.post_type] || p.post_type}</span>
+        ${dt ? `<time>${dt}</time>` : ''}
+      </div>
+      <div class="post-title">${p.title}</div>
+      <div class="post-body">${p.body ?? ''}</div>
+      <div class="post-footer">
+        ${p.event_time ? `<span class="event-detail">🕐 ${formatTime(p.event_time)}</span>` : ''}
+        ${p.location   ? `<span class="event-detail">📍 ${p.location}</span>` : ''}
+        <button onclick="deletePost(${p.id})" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem" onmouseover="this.style.color='#ff5555'" onmouseout="this.style.color='var(--muted)'">🗑 Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatTime(t) {
+  const [h,m] = t.split(':');
+  const hr = +h % 12 || 12;
+  return `${hr}:${m} ${+h >= 12 ? 'PM' : 'AM'}`;
+}
+
+async function deletePost(id) {
+  try { await api.delete(`/updates/${id}`); await loadFeed(); }
+  catch(e) { apiError(e); }
+}
+window.deletePost = deletePost;
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('postDate').value = new Date().toISOString().slice(0,10);
+}
+window.openModal = openModal;
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+window.closeModal = closeModal;
+
+async function submitPost() {
+  const title = document.getElementById('postTitle').value.trim();
+  const body  = document.getElementById('postBody').value.trim();
+  if (!title) { alert('Please enter a title.'); return; }
+  try {
+    await api.post('/updates', {
+      title, body,
+      major:      document.getElementById('postDept').value,
+      post_type:  document.getElementById('postType').value,
+      event_date: document.getElementById('postDate').value || null,
+      event_time: document.getElementById('postTime').value || null,
+      location:   document.getElementById('postLocation').value.trim() || null,
+    });
+    closeModal();
+    ['postTitle','postBody','postLocation'].forEach(id => document.getElementById(id).value = '');
+    await loadFeed();
+  } catch(e) { apiError(e); }
+}
+window.submitPost = submitPost;
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+loadFeed();
+</script>
+</body>
+</html>

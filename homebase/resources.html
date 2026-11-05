@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resources — WVU Home Base</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .res-layout {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    /* Major tabs */
+    .major-tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .major-tab {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.45rem;
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--pixel-font);
+      letter-spacing: 1px;
+      transition: none;
+    }
+
+    .major-tab:hover { border-color: var(--wvu-gold); color: var(--wvu-gold); }
+
+    .major-tab.active { background: var(--wvu-gold); color: var(--wvu-dark); border-color: var(--wvu-gold); box-shadow: var(--glow-gold); }
+
+    .major-tab.cs   { --accent: #6ab0ff; }
+    .major-tab.ee   { --accent: #44ff88; }
+    .major-tab.cpe  { --accent: var(--wvu-gold); }
+    .major-tab.cybe { --accent: #ff66ff; }
+
+    /* Resource grid */
+    .res-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .res-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 1.1rem;
+      transition: none;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .res-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .res-card.type-link::before     { background: #6ab0ff; }
+    .res-card.type-doc::before      { background: var(--wvu-gold); }
+    .res-card.type-tool::before     { background: #44ff88; }
+    .res-card.type-contact::before  { background: #ff66ff; }
+    .res-card.type-video::before    { background: #ff9933; }
+
+    .res-card:hover {
+      border-color: var(--wvu-gold);
+      box-shadow: var(--glow-gold);
+    }
+
+    .res-icon {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .res-title {
+      font-size: 0.55rem;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+      line-height: 1.8;
+    }
+
+    .res-desc {
+      font-size: 0.42rem;
+      color: var(--muted);
+      line-height: 2;
+      margin-bottom: 0.75rem;
+    }
+
+    .res-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+    }
+
+    .res-link {
+      font-size: 0.42rem;
+      color: var(--wvu-gold);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(234,170,0,0.4);
+      padding-bottom: 1px;
+    }
+
+    .res-link:hover { border-color: var(--wvu-gold); }
+
+    .res-del {
+      background: none;
+      border: none;
+      color: transparent;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-family: var(--pixel-font);
+      transition: none;
+    }
+
+    .res-card:hover .res-del { color: var(--muted); }
+    .res-del:hover { color: #ff5555 !important; }
+
+    /* Pinned / quick links bar */
+    .quicklinks {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-top: 3px solid var(--wvu-gold);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .ql-label {
+      font-size: 0.42rem;
+      color: var(--wvu-gold);
+      letter-spacing: 2px;
+      margin-right: 0.25rem;
+    }
+
+    .ql-btn {
+      padding: 0.35rem 0.7rem;
+      font-size: 0.42rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface2);
+      cursor: pointer;
+      font-family: var(--pixel-font);
+      transition: none;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .ql-btn:hover { border-color: var(--wvu-gold); color: var(--wvu-gold); }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: 1.75rem;
+      right: 1.75rem;
+      background: var(--wvu-gold);
+      color: var(--wvu-dark);
+      border: 2px solid var(--wvu-gold-dark);
+      width: 48px; height: 48px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--wvu-gold-dark), var(--glow-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--pixel-font);
+      z-index: 50;
+    }
+
+    .fab:hover {
+      background: var(--wvu-gold-light);
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 var(--wvu-gold-dark);
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="back-btn">← Hub</a>
+  <div class="topbar-logo" style="margin-left:0.5rem">
+    <svg height="22" viewBox="0 0 287.90668 249.06667" style="vertical-align:middle;margin-right:7px;display:inline-block;flex-shrink:0">
+      <g transform="matrix(1.3333333,0,0,-1.3333333,0,249.06667)"><g transform="scale(0.1)">
+        <path fill="#EAAA00" d="m 2068.85,1867.99 h -332.91 l -19.98,-0.18 c -61.48,1.05 -83.77,-21.9 -102.23,-50.18 l -261.58,-387.69 -250.26,379.88 -8.35,12.46 c 0,0 -6.86,11.15 -18.87,11.49 v 0.02 c -0.02,0 -0.04,-0.01 -0.04,-0.01 0,0 -0.03,0.01 -0.04,0.01 v -0.02 c -12.01,-0.34 -18.87,-11.49 -18.87,-11.49 l -8.36,-12.46 -242.087,-379.88 -269.75,387.69 c -18.437,28.28 -40.726,51.23 -102.222,50.18 l -19.988,0.18 H 80.4141 L 80.3125,1551.48 H 276.363 c 41.27,0.41 60.43,-1.54 88.739,-35.52 l 11.738,-17.24 395.609,-619.814 c 0,0 12.883,-19.976 34.735,-20.086 23.578,-0.101 36.648,20.188 36.648,20.188 l 230.758,345.742 v -0.01 l 0.04,0.06 0.04,-0.06 v 0.01 l 239.59,-345.305 c 0,0 13.53,-20.465 33.86,-20.957 21.85,-0.539 33.89,20.481 33.89,20.481 l 390.41,619.751 11.74,17.24 c 20.18,31.69 45.76,35.01 87.03,34.59 l 197.66,0.93 v 316.51"/>
+        <path fill="#EAAA00" d="M 1566.86,981.309 1353.46,642.91 1078.71,1041.59 867.063,730.289 1313.07,30.5313 c 15.39,-26.30083 27.59,-30.222706 33.88,-30.50005 13.47,-0.589844 21.25,6.62891 35.93,31.08985 L 1733.09,670.18 c 31.16,55.441 83.18,54.73 83.18,54.73 h 252.58 v 316.12 h -394.28 c -71.8,0 -107.71,-59.721 -107.71,-59.721"/>
+      </g></g>
+    </svg>
+    LCSEE <span>// RESOURCES</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html"      class="nav-pill">[ HUB ]</a>
+    <a href="updates.html"    class="nav-pill">[ UPDATES ]</a>
+    <a href="flashcards.html" class="nav-pill">[ CARDS ]</a>
+    <a href="tasks.html"      class="nav-pill">[ TASKS ]</a>
+    <a href="planner.html"    class="nav-pill">[ PLANNER ]</a>
+    <a href="gpa.html"        class="nav-pill">[ GPA ]</a>
+    <a href="resources.html"  class="nav-pill active">[ RESOURCES ]</a>
+  </nav>
+</header>
+
+<div class="page-header" style="max-width:1060px;margin:0 auto;padding:1.5rem 1.5rem 1rem">
+  <h1>RESOURCE HUB</h1>
+  <p>Cheat sheets, tools, contacts, and links for LCSEE students</p>
+</div>
+
+<div class="res-layout">
+
+  <!-- Quick Links Bar -->
+  <div class="quicklinks">
+    <span class="ql-label">QUICK:</span>
+    <a class="ql-btn" href="https://ecampus.wvu.edu" target="_blank">eCampus</a>
+    <a class="ql-btn" href="https://starfish.wvu.edu" target="_blank">Starfish</a>
+    <a class="ql-btn" href="https://registrar.wvu.edu" target="_blank">Registrar</a>
+    <a class="ql-btn" href="https://lcsee.wvu.edu" target="_blank">LCSEE Site</a>
+    <a class="ql-btn" href="https://wvu.edu/library" target="_blank">WVU Library</a>
+    <a class="ql-btn" href="https://career.wvu.edu" target="_blank">Career Svc.</a>
+    <a class="ql-btn" href="https://it.wvu.edu" target="_blank">WVU ITS</a>
+  </div>
+
+  <!-- Major filter tabs -->
+  <div class="major-tabs">
+    <button class="major-tab active" onclick="filterMajor('all',this)">[ ALL ]</button>
+    <button class="major-tab cs"   onclick="filterMajor('cs',this)"  >[ CS ]</button>
+    <button class="major-tab ee"   onclick="filterMajor('ee',this)"  >[ EE ]</button>
+    <button class="major-tab cpe"  onclick="filterMajor('cpe',this)" >[ CPE ]</button>
+    <button class="major-tab cybe" onclick="filterMajor('cybe',this)">[ CYBE ]</button>
+  </div>
+
+  <div class="res-grid" id="resGrid"></div>
+
+</div>
+
+<button class="fab" onclick="openModal()" title="Add Resource">+</button>
+
+<!-- Add Resource Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>ADD RESOURCE</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="rTitle" placeholder="e.g. RISC-V Reference Card" />
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="rDesc" placeholder="What is this resource?" style="min-height:60px"></textarea>
+    </div>
+    <div class="form-group">
+      <label>URL (optional)</label>
+      <input type="url" id="rUrl" placeholder="https://…" />
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Major</label>
+        <select id="rMajor">
+          <option value="all">All Majors</option>
+          <option value="cs">Computer Science</option>
+          <option value="ee">Electrical Engineering</option>
+          <option value="cpe">Computer Engineering</option>
+          <option value="cybe">Cyber Security</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="rType">
+          <option value="link">🔗 Link</option>
+          <option value="doc">📄 Document</option>
+          <option value="tool">🔧 Tool</option>
+          <option value="contact">👤 Contact</option>
+          <option value="video">🎬 Video</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Icon (emoji)</label>
+      <input type="text" id="rIcon" maxlength="2" placeholder="📘" style="max-width:80px" />
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn-gold"    onclick="addResource()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MAJOR_LABELS = { cs:'CS', ee:'EE', cpe:'CPE', cybe:'CYBE', all:'ALL' };
+const TYPE_ICONS   = { link:'🔗', doc:'📄', tool:'🔧', contact:'👤', video:'🎬' };
+
+let resources = JSON.parse(localStorage.getItem('hb_resources') || 'null') || [
+  // All-major
+  { id:1,  title:'WVU eCampus',              desc:'Course management system for all WVU courses.',           url:'https://ecampus.wvu.edu',                    major:'all',  type:'link',    icon:'🏫' },
+  { id:2,  title:'WVU Library Databases',    desc:'Full access to IEEE Xplore, ACM DL, and more.',           url:'https://libraries.wvu.edu',                  major:'all',  type:'link',    icon:'📚' },
+  { id:3,  title:'WVU Career Services',      desc:'Resume reviews, job fairs, internship postings.',         url:'https://career.wvu.edu',                     major:'all',  type:'contact', icon:'💼' },
+  { id:4,  title:'LCSEE Advising',           desc:'Schedule a meeting with your LCSEE academic advisor.',    url:'https://lcsee.wvu.edu/advising',             major:'all',  type:'contact', icon:'🎓' },
+  // CS
+  { id:5,  title:'Big-O Cheat Sheet',        desc:'Quick reference for algorithm complexities and data structures.', url:'https://www.bigocheatsheet.com',     major:'cs',   type:'doc',     icon:'🌲' },
+  { id:6,  title:'CS50 — Harvard OpenCW',   desc:'Free intro to CS video lectures and problem sets.',        url:'https://cs50.harvard.edu',                   major:'cs',   type:'video',   icon:'🎬' },
+  { id:7,  title:'GitHub Student Pack',      desc:'Free developer tools including GitHub Copilot, Heroku, etc.', url:'https://education.github.com/pack',      major:'cs',   type:'tool',    icon:'🛠' },
+  // EE
+  { id:8,  title:'All About Circuits',       desc:'Electronics textbook, simulator, and community forums.',  url:'https://www.allaboutcircuits.com',           major:'ee',   type:'link',    icon:'⚡' },
+  { id:9,  title:'Falstad Circuit Simulator',desc:'In-browser interactive circuit simulator.',                url:'https://www.falstad.com/circuit',            major:'ee',   type:'tool',    icon:'🔧' },
+  { id:10, title:'IEEE Xplore',              desc:'Access thousands of IEEE journal papers and standards.',  url:'https://ieeexplore.ieee.org',                major:'ee',   type:'link',    icon:'📡' },
+  // CpE
+  { id:11, title:'RISC-V Spec',              desc:'Official RISC-V ISA specification document.',             url:'https://riscv.org/technical/specifications',  major:'cpe',  type:'doc',     icon:'⚙️' },
+  { id:12, title:'Logisim Evolution',        desc:'Free digital logic circuit design and simulation tool.',  url:'https://github.com/logisim-evolution',        major:'cpe',  type:'tool',    icon:'🔌' },
+  // CYBE
+  { id:13, title:'OverTheWire Wargames',     desc:'Practice Linux and CTF skills with progressive challenges.', url:'https://overthewire.org/wargames',       major:'cybe', type:'tool',    icon:'🔐' },
+  { id:14, title:'NIST Cybersecurity Framework', desc:'Official NIST framework for cybersecurity risk management.', url:'https://www.nist.gov/cyberframework', major:'cybe', type:'doc',     icon:'🛡' },
+  { id:15, title:'TryHackMe',               desc:'Hands-on cybersecurity training with guided rooms.',       url:'https://tryhackme.com',                      major:'cybe', type:'tool',    icon:'🧪' },
+];
+
+function saveRes() { localStorage.setItem('hb_resources', JSON.stringify(resources)); }
+
+let activeFilter = 'all';
+
+function filterMajor(major, btn) {
+  activeFilter = major;
+  document.querySelectorAll('.major-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function renderGrid() {
+  const filtered = resources.filter(r => activeFilter === 'all' || r.major === activeFilter);
+  const el = document.getElementById('resGrid');
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">📭</span>No resources yet. Add one!</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(r => `
+    <div class="res-card type-${r.type}">
+      <button class="res-del" onclick="deleteRes(${r.id})">✕</button>
+      <span class="res-icon">${r.icon || TYPE_ICONS[r.type]}</span>
+      <div class="res-title">${r.title}</div>
+      <div class="res-desc">${r.desc}</div>
+      <div class="res-footer">
+        <span class="tag">${MAJOR_LABELS[r.major]}</span>
+        ${r.url
+          ? `<a class="res-link" href="${r.url}" target="_blank" rel="noopener">OPEN →</a>`
+          : `<span class="res-link" style="opacity:0.4">NO URL</span>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteRes(id) {
+  resources = resources.filter(r => r.id !== id);
+  saveRes();
+  renderGrid();
+}
+
+function openModal()  { document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function addResource() {
+  const title = document.getElementById('rTitle').value.trim();
+  if (!title) { alert('Enter a title.'); return; }
+  resources.push({
+    id:    Date.now(),
+    title,
+    desc:  document.getElementById('rDesc').value.trim(),
+    url:   document.getElementById('rUrl').value.trim(),
+    major: document.getElementById('rMajor').value,
+    type:  document.getElementById('rType').value,
+    icon:  document.getElementById('rIcon').value || TYPE_ICONS[document.getElementById('rType').value],
+  });
+  saveRes();
+  closeModal();
+  renderGrid();
+  document.getElementById('rTitle').value = '';
+  document.getElementById('rDesc').value  = '';
+  document.getElementById('rUrl').value   = '';
+  document.getElementById('rIcon').value  = '';
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+renderGrid();
+</script>
+</body>
+</html>

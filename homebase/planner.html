@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planner — WVU Home Base</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .planner-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 850px) {
+      .planner-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Calendar */
+    .calendar-wrap {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .cal-month {
+      font-family: var(--pixel-font);
+      font-size: 0.7rem;
+      color: var(--wvu-gold);
+    }
+
+    .cal-nav {
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .cal-nav:hover { border-color: var(--wvu-gold); color: var(--wvu-gold); }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    .cal-day-name {
+      text-align: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--muted);
+      padding-bottom: 0.4rem;
+      text-transform: uppercase;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      position: relative;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .cal-day:hover:not(.empty) {
+      background: rgba(234,170,0,0.12);
+      color: var(--wvu-gold);
+    }
+
+    .cal-day.today {
+      background: var(--wvu-gold);
+      color: var(--wvu-dark);
+      font-weight: 700;
+    }
+
+    .cal-day.selected {
+      background: var(--wvu-light-blue);
+      color: #fff;
+      border: 1.5px solid var(--wvu-gold);
+    }
+
+    .cal-day.today.selected {
+      background: var(--wvu-gold-dark);
+    }
+
+    .cal-day.empty { cursor: default; }
+
+    .cal-event-dot {
+      width: 4px; height: 4px;
+      background: var(--wvu-gold);
+      border-radius: 50%;
+    }
+
+    .cal-day.today .cal-event-dot { background: var(--wvu-dark); }
+
+    /* Day Panel */
+    .day-panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .day-panel-title {
+      font-family: var(--pixel-font);
+      font-size: 0.6rem;
+      color: var(--wvu-gold);
+      margin-bottom: 0.25rem;
+    }
+
+    .event-item {
+      background: var(--surface2);
+      border-left: 3px solid var(--wvu-gold);
+      border-radius: 0 6px 6px 0;
+      padding: 0.65rem 0.8rem;
+      position: relative;
+    }
+
+    .event-item.type-class    { border-color: #7b7bff; }
+    .event-item.type-deadline { border-color: #ff7b7b; }
+    .event-item.type-meeting  { border-color: #4ade80; }
+    .event-item.type-personal { border-color: var(--wvu-gold); }
+    .event-item.type-exam     { border-color: #ff9a3c; }
+
+    .event-name { font-size: 0.88rem; font-weight: 600; }
+    .event-time { font-size: 0.73rem; color: var(--muted); margin-top: 0.2rem; }
+
+    .event-del {
+      position: absolute;
+      right: 0.5rem; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: color 0.15s;
+    }
+
+    .event-item:hover .event-del { color: var(--muted); }
+    .event-del:hover { color: #ff7b7b !important; }
+
+    /* Upcoming section */
+    .upcoming-section {
+      margin-top: 1.5rem;
+    }
+
+    .upcoming-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .upcoming-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .upcoming-date-box {
+      min-width: 42px;
+      text-align: center;
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 0.3rem;
+    }
+
+    .upcoming-month { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
+    .upcoming-day   { font-family: var(--pixel-font); font-size: 0.75rem; color: var(--wvu-gold); }
+
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--wvu-gold);
+      color: var(--wvu-dark);
+      border: none;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(234,170,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      z-index: 50;
+    }
+
+    .fab:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 6px 28px rgba(234,170,0,0.6);
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="back-btn">← Hub</a>
+  <div class="topbar-logo" style="margin-left:0.5rem">
+    <svg height="22" viewBox="0 0 287.90668 249.06667" style="vertical-align:middle;margin-right:7px;display:inline-block;flex-shrink:0">
+      <g transform="matrix(1.3333333,0,0,-1.3333333,0,249.06667)"><g transform="scale(0.1)">
+        <path fill="#EAAA00" d="m 2068.85,1867.99 h -332.91 l -19.98,-0.18 c -61.48,1.05 -83.77,-21.9 -102.23,-50.18 l -261.58,-387.69 -250.26,379.88 -8.35,12.46 c 0,0 -6.86,11.15 -18.87,11.49 v 0.02 c -0.02,0 -0.04,-0.01 -0.04,-0.01 0,0 -0.03,0.01 -0.04,0.01 v -0.02 c -12.01,-0.34 -18.87,-11.49 -18.87,-11.49 l -8.36,-12.46 -242.087,-379.88 -269.75,387.69 c -18.437,28.28 -40.726,51.23 -102.222,50.18 l -19.988,0.18 H 80.4141 L 80.3125,1551.48 H 276.363 c 41.27,0.41 60.43,-1.54 88.739,-35.52 l 11.738,-17.24 395.609,-619.814 c 0,0 12.883,-19.976 34.735,-20.086 23.578,-0.101 36.648,20.188 36.648,20.188 l 230.758,345.742 v -0.01 l 0.04,0.06 0.04,-0.06 v 0.01 l 239.59,-345.305 c 0,0 13.53,-20.465 33.86,-20.957 21.85,-0.539 33.89,20.481 33.89,20.481 l 390.41,619.751 11.74,17.24 c 20.18,31.69 45.76,35.01 87.03,34.59 l 197.66,0.93 v 316.51"/>
+        <path fill="#EAAA00" d="M 1566.86,981.309 1353.46,642.91 1078.71,1041.59 867.063,730.289 1313.07,30.5313 c 15.39,-26.30083 27.59,-30.222706 33.88,-30.50005 13.47,-0.589844 21.25,6.62891 35.93,31.08985 L 1733.09,670.18 c 31.16,55.441 83.18,54.73 83.18,54.73 h 252.58 v 316.12 h -394.28 c -71.8,0 -107.71,-59.721 -107.71,-59.721"/>
+      </g></g>
+    </svg>
+    LCSEE <span>// PLANNER</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html"      class="nav-pill">[ HUB ]</a>
+    <a href="updates.html"    class="nav-pill">[ UPDATES ]</a>
+    <a href="flashcards.html" class="nav-pill">[ CARDS ]</a>
+    <a href="tasks.html"      class="nav-pill">[ TASKS ]</a>
+    <a href="planner.html"    class="nav-pill active">[ PLANNER ]</a>
+    <a href="gpa.html"        class="nav-pill">[ GPA ]</a>
+    <a href="resources.html"  class="nav-pill">[ RESOURCES ]</a>
+  </nav>
+</header>
+
+<div class="page-header" style="max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 1rem">
+  <h1>📅 Planner &amp; Calendar</h1>
+  <p>Schedule classes, deadlines, meetings, and personal events</p>
+</div>
+
+<div class="planner-layout">
+
+  <!-- Left: Calendar + Upcoming -->
+  <div>
+    <div class="calendar-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-month" id="calMonthLabel"></div>
+        <button class="cal-nav" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="upcoming-section">
+      <div class="upcoming-title">📌 Upcoming Events</div>
+      <div id="upcomingList"></div>
+    </div>
+  </div>
+
+  <!-- Right: Day Panel -->
+  <div class="day-panel">
+    <div class="day-panel-title" id="dayPanelTitle">SELECT A DAY</div>
+    <button class="btn-gold" style="width:100%" onclick="openAddModal()">+ Add Event</button>
+    <div id="dayEvents">
+      <div class="empty-state"><span class="icon">📅</span>Select a day to see events</div>
+    </div>
+  </div>
+
+</div>
+
+<button class="fab" onclick="openAddModal()" title="Add Event">+</button>
+
+<!-- Add Event Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Event</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Event Name</label>
+      <input type="text" id="evName" placeholder="e.g. EE 201 Lab" />
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="evDate" />
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="evType">
+          <option value="class">🎓 Class</option>
+          <option value="deadline">⏰ Deadline</option>
+          <option value="exam">📝 Exam</option>
+          <option value="meeting">🤝 Meeting</option>
+          <option value="personal">⭐ Personal</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="time" id="evStart" />
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <input type="time" id="evEnd" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Location / Notes</label>
+      <input type="text" id="evLocation" placeholder="e.g. ESB 302" />
+    </div>
+    <div class="form-group">
+      <label>Repeat</label>
+      <select id="evRepeat">
+        <option value="none">No Repeat</option>
+        <option value="weekly">Weekly (every same weekday)</option>
+        <option value="daily">Daily</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn-gold" onclick="addEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { api, apiError } from './api.js';
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const TYPE_LABELS = { class:'Class', deadline:'Deadline', exam:'Exam', meeting:'Meeting', personal:'Personal' };
+
+let events = [];
+
+let viewYear  = new Date().getFullYear();
+let viewMonth = new Date().getMonth();
+let selectedDate = toISO(new Date());
+
+function toISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  const [h,m] = t.split(':');
+  const hr = +h % 12 || 12;
+  return `${hr}:${m} ${+h >= 12 ? 'PM' : 'AM'}`;
+}
+
+async function loadMonthEvents() {
+  const firstDay = new Date(viewYear, viewMonth, 1);
+  const lastDay  = new Date(viewYear, viewMonth + 1, 0);
+  const start = toISO(firstDay);
+  const end   = toISO(lastDay);
+  try {
+    events = await api(`/api/v1/events/expand?start=${start}&end=${end}`);
+  } catch (e) {
+    console.error('Failed to load events:', apiError(e));
+    events = [];
+  }
+}
+
+function getEventsForDate(dateStr) {
+  return events
+    .filter(ev => ev.event_date === dateStr)
+    .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+}
+
+function hasEvents(dateStr) { return getEventsForDate(dateStr).length > 0; }
+
+function renderCalendar() {
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const todayStr = toISO(new Date());
+
+  document.getElementById('calMonthLabel').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+
+  let html = DAYS.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const isSel   = dateStr === selectedDate;
+    const hasDot  = hasEvents(dateStr);
+    html += `<div class="cal-day ${isToday?'today':''} ${isSel?'selected':''}"
+                  onclick="selectDate('${dateStr}')">
+               ${d}
+               ${hasDot ? '<div class="cal-event-dot"></div>' : ''}
+             </div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function selectDate(dateStr) {
+  selectedDate = dateStr;
+  renderCalendar();
+  renderDayPanel();
+}
+
+function renderDayPanel() {
+  const dt = new Date(selectedDate + 'T12:00');
+  document.getElementById('dayPanelTitle').textContent =
+    dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const evs = getEventsForDate(selectedDate);
+  const el  = document.getElementById('dayEvents');
+
+  if (!evs.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:1.5rem 0"><span class="icon" style="font-size:1.5rem">🗓</span>No events today</div>';
+    return;
+  }
+
+  el.innerHTML = evs.map(ev => `
+    <div class="event-item type-${ev.event_type}">
+      <button class="event-del" onclick="deleteEvent(${ev.id})">✕</button>
+      <div class="event-name">${ev.name}</div>
+      <div class="event-time">
+        ${ev.start_time ? `🕐 ${formatTime(ev.start_time)}${ev.end_time?' – '+formatTime(ev.end_time):''}` : ''}
+        ${ev.location ? ` · 📍 ${ev.location}` : ''}
+        ${ev.repeat && ev.repeat !== 'none' ? ` · 🔁 ${ev.repeat}` : ''}
+      </div>
+      <div style="margin-top:0.3rem"><span class="tag">${TYPE_LABELS[ev.event_type] || ev.event_type}</span></div>
+    </div>
+  `).join('');
+}
+
+function renderUpcoming() {
+  const upcoming = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const ds = toISO(d);
+    getEventsForDate(ds).forEach(ev => upcoming.push({ ...ev, _ds: ds, _d: d }));
+  }
+  const slice = upcoming.slice(0, 8);
+  const el = document.getElementById('upcomingList');
+  if (!slice.length) { el.innerHTML = '<div class="empty-state">No upcoming events</div>'; return; }
+  el.innerHTML = slice.map(ev => {
+    const m = ev._d.toLocaleDateString('en-US',{month:'short'});
+    const day = ev._d.getDate();
+    return `
+    <div class="upcoming-item">
+      <div class="upcoming-date-box">
+        <div class="upcoming-month">${m}</div>
+        <div class="upcoming-day">${day}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:0.85rem;font-weight:600">${ev.name}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${ev.start_time ? formatTime(ev.start_time) : ''} ${ev.location?'· '+ev.location:''}</div>
+      </div>
+      <span class="tag">${TYPE_LABELS[ev.event_type] || ev.event_type}</span>
+    </div>`;
+  }).join('');
+}
+
+async function changeMonth(dir) {
+  viewMonth += dir;
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
+  await loadMonthEvents();
+  renderCalendar();
+  renderDayPanel();
+  renderUpcoming();
+}
+
+async function deleteEvent(id) {
+  try {
+    await api(`/api/v1/events/${id}`, { method: 'DELETE' });
+  } catch (e) {
+    alert('Failed to delete event: ' + apiError(e));
+    return;
+  }
+  await loadMonthEvents();
+  renderCalendar();
+  renderDayPanel();
+  renderUpcoming();
+}
+
+function openAddModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('evDate').value = selectedDate || toISO(new Date());
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function addEvent() {
+  const name = document.getElementById('evName').value.trim();
+  const date = document.getElementById('evDate').value;
+  if (!name || !date) { alert('Name and date are required.'); return; }
+
+  const body = {
+    name,
+    event_date: date,
+    start_time: document.getElementById('evStart').value,
+    end_time:   document.getElementById('evEnd').value,
+    event_type: document.getElementById('evType').value,
+    location:   document.getElementById('evLocation').value.trim(),
+    repeat:     document.getElementById('evRepeat').value,
+  };
+
+  try {
+    await api('/api/v1/events', { method: 'POST', body: JSON.stringify(body) });
+  } catch (e) {
+    alert('Failed to save event: ' + apiError(e));
+    return;
+  }
+
+  closeModal();
+  selectedDate = date;
+  await loadMonthEvents();
+  renderCalendar();
+  renderDayPanel();
+  renderUpcoming();
+  document.getElementById('evName').value = '';
+  document.getElementById('evLocation').value = '';
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+window.selectDate  = selectDate;
+window.changeMonth = changeMonth;
+window.deleteEvent = deleteEvent;
+window.openAddModal = openAddModal;
+window.closeModal  = closeModal;
+window.addEvent    = addEvent;
+
+async function init() {
+  await loadMonthEvents();
+  renderCalendar();
+  renderDayPanel();
+  renderUpcoming();
+}
+
+init();
+</script>
+</body>
+</html>

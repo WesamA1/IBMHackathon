@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WVU Home Base</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ========================
+       HERO + BOOT SEQUENCE
+    ======================== */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 54px);
+      padding: 1.5rem 1rem 3rem;
+      text-align: center;
+      gap: 0.75rem;
+    }
+
+    .boot-text {
+      font-size: 0.42rem;
+      color: #44ff88;
+      letter-spacing: 1px;
+      line-height: 2.2;
+      text-shadow: 0 0 8px #44ff88;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-title {
+      font-size: clamp(0.7rem, 1.8vw, 1.2rem);
+      color: var(--wvu-gold);
+      letter-spacing: 4px;
+      text-shadow: var(--glow-gold);
+      margin-bottom: 0.2rem;
+    }
+
+    .hero-sub {
+      font-size: 0.45rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ========================
+       MOTHERBOARD
+    ======================== */
+    .mb-wrapper {
+      position: relative;
+      width: min(760px, 96vw);
+      user-select: none;
+    }
+
+    .mb-board {
+      width: 100%;
+      aspect-ratio: 7 / 5;
+      background: #0d2b0d;
+      border: 4px solid #1a5a1a;
+      position: relative;
+      overflow: hidden;
+      /* PCB grid */
+      background-image:
+        linear-gradient(90deg, rgba(0,180,60,0.06) 1px, transparent 1px),
+        linear-gradient(0deg,  rgba(0,180,60,0.06) 1px, transparent 1px),
+        radial-gradient(ellipse at 30% 40%, rgba(0,40,0,0.8) 0%, rgba(8,22,8,1) 100%);
+      background-size: 14px 14px, 14px 14px, 100% 100%;
+      box-shadow: 0 0 0 2px #0a1a0a, 0 0 50px rgba(0,180,60,0.08);
+      image-rendering: pixelated;
+    }
+
+    /* Scan effect on PCB */
+    .mb-board::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.12) 3px,
+        rgba(0,0,0,0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* Gold PCB traces */
+    .trace {
+      position: absolute;
+      background: rgba(180,120,0,0.3);
+      z-index: 1;
+    }
+
+    .trace.h { height: 2px; }
+    .trace.v { width: 2px; }
+
+    /* Trace node dots */
+    .trace-node {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: rgba(234,170,0,0.5);
+      z-index: 2;
+    }
+
+    /* ========================
+       COMPONENTS
+    ======================== */
+    .mb-component {
+      position: absolute;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: filter 0.1s;
+    }
+
+    .mb-component:hover {
+      filter: brightness(1.4) drop-shadow(0 0 10px var(--wvu-gold));
+      z-index: 30;
+    }
+
+    .mb-component:hover .comp-label {
+      color: #fff;
+      text-shadow: var(--glow-gold);
+    }
+
+    /* Tooltip */
+    .mb-component::before {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--wvu-dark);
+      border: 2px solid var(--wvu-gold);
+      color: var(--wvu-gold);
+      padding: 0.35rem 0.7rem;
+      font-size: 0.45rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+      box-shadow: var(--glow-gold), 3px 3px 0 #000;
+      letter-spacing: 1px;
+    }
+
+    .mb-component:hover::before { opacity: 1; }
+
+    .comp-label {
+      font-size: 0.35rem;
+      color: var(--wvu-gold);
+      margin-top: 3px;
+      white-space: nowrap;
+      text-shadow: 0 0 4px rgba(234,170,0,0.6);
+      letter-spacing: 1px;
+    }
+
+    .comp-sub {
+      font-size: 0.3rem;
+      color: rgba(180,200,220,0.5);
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    /* ---- CPU (center) ---- */
+    #comp-cpu {
+      top: 22%; left: 50%;
+      transform: translateX(-50%);
+      width: 16%;
+    }
+
+    .cpu-body {
+      width: 100%;
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #222, #111);
+      border: 3px solid #555;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 2px;
+      padding: 5px;
+      box-shadow: 0 0 0 2px #000, inset 0 0 8px rgba(0,0,0,0.8);
+      image-rendering: pixelated;
+    }
+
+    .cpu-dot {
+      background: #333;
+    }
+    .cpu-dot.on { background: #EAAA00; box-shadow: 0 0 4px #EAAA00; }
+    .cpu-dot.dim { background: #7a6500; }
+
+    /* CPU pin dots around edge */
+    .cpu-pins {
+      position: absolute;
+      width: 110%;
+      height: 110%;
+      top: -5%; left: -5%;
+    }
+
+    /* ---- GPU (long card, lower right area) ---- */
+    #comp-gpu {
+      top: 58%; left: 46%;
+      width: 46%;
+      height: 10%;
+    }
+
+    .gpu-body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #0a0a20, #151530);
+      border: 2px solid #2a2a6a;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 4px;
+      box-shadow: 0 0 0 1px #000;
+    }
+
+    .gpu-slot {
+      width: 5px;
+      height: 70%;
+      background: #3535aa;
+      border: 1px solid #5555cc;
+    }
+
+    .gpu-chip {
+      width: 22%;
+      aspect-ratio: 1;
+      background: #1a1a3a;
+      border: 1px solid #4a4a9a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: auto;
+      font-size: 0.25rem;
+      color: #8888ff;
+      padding: 2px;
+    }
+
+    /* ---- RAM (left side, vertical sticks) ---- */
+    #comp-ram {
+      top: 8%; left: 9%;
+      width: 8%;
+      height: 44%;
+      flex-direction: column;
+      justify-content: space-evenly;
+    }
+
+    .ram-stick {
+      width: 100%;
+      height: 26%;
+      background: linear-gradient(90deg, #051205, #0f2a0f, #051205);
+      border: 2px solid #1a5a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 0 0 1px #000;
+    }
+
+    .ram-stick::before {
+      content: '';
+      position: absolute;
+      top: 20%; bottom: 20%;
+      left: 25%; right: 25%;
+      background: #113311;
+      border: 1px solid #2a6a2a;
+    }
+
+    .ram-notch {
+      width: 18%;
+      height: 55%;
+      background: #000;
+    }
+
+    /* ---- SSD (lower left, horizontal) ---- */
+    #comp-ssd {
+      top: 70%; left: 4%;
+      width: 32%;
+      height: 12%;
+    }
+
+    .ssd-body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #111, #1e1e1e, #111);
+      border: 2px solid #3a3a3a;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 3px;
+      box-shadow: 0 0 0 1px #000;
+    }
+
+    .ssd-cell {
+      width: 7px;
+      height: 60%;
+      background: #282866;
+      border: 1px solid #4a4aaa;
+    }
+
+    .ssd-label {
+      margin-left: auto;
+      font-size: 0.28rem;
+      color: #6666bb;
+    }
+
+    /* ---- Northbridge (GPA Calc) ---- */
+    #comp-nb {
+      top: 50%; left: 33%;
+      width: 12%;
+    }
+
+    .nb-body {
+      width: 100%;
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #1a0a2a, #0f0520);
+      border: 2px solid #6a2aaa;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 2px;
+      padding: 4px;
+      box-shadow: 0 0 8px rgba(120,0,200,0.3);
+    }
+
+    .nb-dot { background: #2a1040; }
+    .nb-dot.on { background: #aa44ff; box-shadow: 0 0 3px #aa44ff; }
+
+    /* ---- ROM Chip (Resources) ---- */
+    #comp-rom {
+      top: 8%; left: 72%;
+      width: 10%;
+    }
+
+    .rom-body {
+      width: 100%;
+      padding: 5px;
+      background: #1a1a00;
+      border: 2px solid #7a7a00;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      box-shadow: 0 0 6px rgba(180,180,0,0.2);
+    }
+
+    .rom-pin-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .rom-pin {
+      width: 4px;
+      height: 6px;
+      background: #aaa;
+      border: 1px solid #666;
+    }
+
+    .rom-label-inner {
+      background: #2a2a00;
+      border: 1px solid #5a5a00;
+      text-align: center;
+      font-size: 0.28rem;
+      color: #dddd00;
+      padding: 3px 2px;
+      margin: 1px 0;
+    }
+
+    /* ---- Decorative caps ---- */
+    .cap {
+      position: absolute;
+      z-index: 5;
+    }
+
+    .cap-body {
+      width: 100%;
+      aspect-ratio: 1;
+      background: radial-gradient(circle at 40% 35%, #5aaa5a, #1a5a1a);
+      border: 1px solid #3a8a3a;
+      box-shadow: 0 0 4px rgba(0,200,0,0.2);
+    }
+
+    .cap-top {
+      height: 2px;
+      background: #8aaa8a;
+      width: 50%;
+      margin: 0 auto;
+    }
+
+    /* ---- Small SMD chips (decorative) ---- */
+    .smd {
+      position: absolute;
+      background: #1a1a1a;
+      border: 1px solid #3a3a3a;
+      z-index: 5;
+    }
+
+    /* ---- Power LED ---- */
+    .power-led {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #00ff44;
+      box-shadow: 0 0 8px #00ff44, 0 0 20px rgba(0,255,68,0.4);
+      z-index: 10;
+      animation: blink 2s step-end infinite;
+      top: 4%; right: 4%;
+    }
+
+    /* ========================
+       DEPT BADGES
+    ======================== */
+    .dept-badges {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .dept-badge {
+      padding: 0.3rem 0.75rem;
+      font-size: 0.42rem;
+      background: rgba(234,170,0,0.08);
+      border: 1px solid rgba(234,170,0,0.3);
+      color: var(--wvu-gold);
+      letter-spacing: 1px;
+    }
+
+    /* ========================
+       BOTTOM STATUS BAR
+    ======================== */
+    .status-bar {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      align-items: center;
+      margin-top: 1.25rem;
+      font-size: 0.38rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .status-bar span { display: flex; align-items: center; gap: 0.3rem; }
+
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      background: #44ff88;
+      box-shadow: 0 0 4px #44ff88;
+    }
+
+    /* Click nav transition */
+    .page-exit {
+      animation: pixelExit 0.2s steps(4) forwards;
+    }
+
+    @keyframes pixelExit {
+      from { opacity: 1; filter: brightness(1); }
+      to   { opacity: 0; filter: brightness(3); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <svg height="22" viewBox="0 0 287.90668 249.06667" style="vertical-align:middle;margin-right:7px;display:inline-block;flex-shrink:0">
+      <g transform="matrix(1.3333333,0,0,-1.3333333,0,249.06667)"><g transform="scale(0.1)">
+        <path fill="#EAAA00" d="m 2068.85,1867.99 h -332.91 l -19.98,-0.18 c -61.48,1.05 -83.77,-21.9 -102.23,-50.18 l -261.58,-387.69 -250.26,379.88 -8.35,12.46 c 0,0 -6.86,11.15 -18.87,11.49 v 0.02 c -0.02,0 -0.04,-0.01 -0.04,-0.01 0,0 -0.03,0.01 -0.04,0.01 v -0.02 c -12.01,-0.34 -18.87,-11.49 -18.87,-11.49 l -8.36,-12.46 -242.087,-379.88 -269.75,387.69 c -18.437,28.28 -40.726,51.23 -102.222,50.18 l -19.988,0.18 H 80.4141 L 80.3125,1551.48 H 276.363 c 41.27,0.41 60.43,-1.54 88.739,-35.52 l 11.738,-17.24 395.609,-619.814 c 0,0 12.883,-19.976 34.735,-20.086 23.578,-0.101 36.648,20.188 36.648,20.188 l 230.758,345.742 v -0.01 l 0.04,0.06 0.04,-0.06 v 0.01 l 239.59,-345.305 c 0,0 13.53,-20.465 33.86,-20.957 21.85,-0.539 33.89,20.481 33.89,20.481 l 390.41,619.751 11.74,17.24 c 20.18,31.69 45.76,35.01 87.03,34.59 l 197.66,0.93 v 316.51"/>
+        <path fill="#EAAA00" d="M 1566.86,981.309 1353.46,642.91 1078.71,1041.59 867.063,730.289 1313.07,30.5313 c 15.39,-26.30083 27.59,-30.222706 33.88,-30.50005 13.47,-0.589844 21.25,6.62891 35.93,31.08985 L 1733.09,670.18 c 31.16,55.441 83.18,54.73 83.18,54.73 h 252.58 v 316.12 h -394.28 c -71.8,0 -107.71,-59.721 -107.71,-59.721"/>
+      </g></g>
+    </svg>
+    LCSEE <span>// HOME BASE</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html"      class="nav-pill active">[ HUB ]</a>
+    <a href="updates.html"    class="nav-pill">[ UPDATES ]</a>
+    <a href="flashcards.html" class="nav-pill">[ CARDS ]</a>
+    <a href="tasks.html"      class="nav-pill">[ TASKS ]</a>
+    <a href="planner.html"    class="nav-pill">[ PLANNER ]</a>
+    <a href="gpa.html"        class="nav-pill">[ GPA ]</a>
+    <a href="resources.html"  class="nav-pill">[ RESOURCES ]</a>
+  </nav>
+</header>
+
+<main class="hero">
+
+  <div class="boot-text">
+    SYSTEM BOOT... OK<br>
+    WVU_HOMEBASE v2.0 — LOADING...<span class="blink">▌</span>
+  </div>
+
+  <div class="hero-title">// LCSEE HOME BASE //</div>
+  <div class="hero-sub">SELECT A MODULE TO INITIALIZE</div>
+
+  <!-- Motherboard -->
+  <div class="mb-wrapper">
+    <div class="mb-board" id="motherboard">
+
+      <!-- Power LED -->
+      <div class="power-led"></div>
+
+      <!-- PCB Trace lines (horizontal) -->
+      <div class="trace h" style="top:30%;left:0;width:22%"></div>
+      <div class="trace h" style="top:30%;left:30%;width:20%"></div>
+      <div class="trace h" style="top:30%;left:66%;width:34%"></div>
+      <div class="trace h" style="top:55%;left:0;width:36%"></div>
+      <div class="trace h" style="top:55%;left:45%;width:55%"></div>
+      <div class="trace h" style="top:72%;left:36%;width:14%"></div>
+      <div class="trace h" style="top:72%;left:66%;width:34%"></div>
+      <div class="trace h" style="top:87%;left:36%;width:64%"></div>
+
+      <!-- PCB Trace lines (vertical) -->
+      <div class="trace v" style="top:0;left:22%;height:30%"></div>
+      <div class="trace v" style="top:0;left:66%;height:30%"></div>
+      <div class="trace v" style="top:30%;left:22%;height:25%"></div>
+      <div class="trace v" style="top:30%;left:66%;height:25%"></div>
+      <div class="trace v" style="top:55%;left:36%;height:17%"></div>
+      <div class="trace v" style="top:55%;left:66%;height:32%"></div>
+      <div class="trace v" style="top:72%;left:50%;height:15%"></div>
+
+      <!-- Trace nodes -->
+      <div class="trace-node" style="top:calc(30% - 3px);left:calc(22% - 3px)"></div>
+      <div class="trace-node" style="top:calc(30% - 3px);left:calc(66% - 3px)"></div>
+      <div class="trace-node" style="top:calc(55% - 3px);left:calc(36% - 3px)"></div>
+      <div class="trace-node" style="top:calc(55% - 3px);left:calc(66% - 3px)"></div>
+      <div class="trace-node" style="top:calc(72% - 3px);left:calc(50% - 3px)"></div>
+
+      <!-- Decorative capacitors -->
+      <div class="cap" style="top:4%;left:56%;width:2.5%">
+        <div class="cap-top"></div><div class="cap-body"></div>
+      </div>
+      <div class="cap" style="top:4%;left:60%;width:2.5%">
+        <div class="cap-top"></div><div class="cap-body"></div>
+      </div>
+      <div class="cap" style="top:12%;left:56%;width:2.5%">
+        <div class="cap-top"></div><div class="cap-body"></div>
+      </div>
+      <div class="cap" style="top:12%;left:60%;width:2.5%">
+        <div class="cap-top"></div><div class="cap-body"></div>
+      </div>
+      <div class="cap" style="top:80%;left:86%;width:2.2%">
+        <div class="cap-top"></div><div class="cap-body"></div>
+      </div>
+      <div class="cap" style="top:88%;left:86%;width:2.2%">
+        <div class="cap-top"></div><div class="cap-body"></div>
+      </div>
+
+      <!-- SMD resistors (decorative) -->
+      <div class="smd" style="top:38%;left:75%;width:4%;height:2%"></div>
+      <div class="smd" style="top:41%;left:75%;width:4%;height:2%"></div>
+      <div class="smd" style="top:44%;left:75%;width:4%;height:2%"></div>
+      <div class="smd" style="top:38%;left:82%;width:4%;height:2%"></div>
+      <div class="smd" style="top:41%;left:82%;width:4%;height:2%"></div>
+
+      <!-- ============ CPU — Departmental Updates ============ -->
+      <div class="mb-component" id="comp-cpu"
+           data-tip="[ UPDATES ] Dept Announcements"
+           onclick="navigate('updates.html')">
+        <div class="cpu-body">
+          <div class="cpu-dot"></div><div class="cpu-dot"></div><div class="cpu-dot"></div><div class="cpu-dot"></div><div class="cpu-dot"></div>
+          <div class="cpu-dot"></div><div class="cpu-dot on"></div><div class="cpu-dot dim"></div><div class="cpu-dot on"></div><div class="cpu-dot"></div>
+          <div class="cpu-dot"></div><div class="cpu-dot dim"></div><div class="cpu-dot on"></div><div class="cpu-dot dim"></div><div class="cpu-dot"></div>
+          <div class="cpu-dot"></div><div class="cpu-dot on"></div><div class="cpu-dot dim"></div><div class="cpu-dot on"></div><div class="cpu-dot"></div>
+          <div class="cpu-dot"></div><div class="cpu-dot"></div><div class="cpu-dot"></div><div class="cpu-dot"></div><div class="cpu-dot"></div>
+        </div>
+        <div class="comp-label">CPU</div>
+        <div class="comp-sub">UPDATES</div>
+      </div>
+
+      <!-- ============ GPU — Flashcards ============ -->
+      <div class="mb-component" id="comp-gpu"
+           data-tip="[ GPU ] Flashcard Studio"
+           onclick="navigate('flashcards.html')">
+        <div class="gpu-body">
+          <div class="gpu-slot"></div>
+          <div class="gpu-slot"></div>
+          <div class="gpu-slot"></div>
+          <div class="gpu-slot"></div>
+          <div class="gpu-slot"></div>
+          <div class="gpu-chip">GPU</div>
+        </div>
+        <div class="comp-label">GPU</div>
+        <div class="comp-sub">FLASHCARDS</div>
+      </div>
+
+      <!-- ============ RAM — Tasks ============ -->
+      <div class="mb-component" id="comp-ram"
+           data-tip="[ RAM ] Task Manager"
+           onclick="navigate('tasks.html')">
+        <div class="ram-stick"><div class="ram-notch"></div></div>
+        <div class="ram-stick"><div class="ram-notch"></div></div>
+        <div class="ram-stick"><div class="ram-notch"></div></div>
+        <div class="comp-label">RAM</div>
+        <div class="comp-sub">TASKS</div>
+      </div>
+
+      <!-- ============ SSD — Planner ============ -->
+      <div class="mb-component" id="comp-ssd"
+           data-tip="[ SSD ] Planner & Calendar"
+           onclick="navigate('planner.html')">
+        <div class="ssd-body">
+          <div class="ssd-cell"></div>
+          <div class="ssd-cell"></div>
+          <div class="ssd-cell"></div>
+          <div class="ssd-cell"></div>
+          <div class="ssd-cell"></div>
+          <div class="ssd-cell"></div>
+          <div class="ssd-label">SSD</div>
+        </div>
+        <div class="comp-label">SSD</div>
+        <div class="comp-sub">PLANNER</div>
+      </div>
+
+      <!-- ============ Northbridge — GPA Calculator ============ -->
+      <div class="mb-component" id="comp-nb"
+           data-tip="[ NBRIDGE ] GPA Calculator"
+           onclick="navigate('gpa.html')">
+        <div class="nb-body">
+          <div class="nb-dot"></div><div class="nb-dot on"></div><div class="nb-dot"></div><div class="nb-dot on"></div>
+          <div class="nb-dot on"></div><div class="nb-dot"></div><div class="nb-dot on"></div><div class="nb-dot"></div>
+          <div class="nb-dot"></div><div class="nb-dot on"></div><div class="nb-dot"></div><div class="nb-dot on"></div>
+          <div class="nb-dot on"></div><div class="nb-dot"></div><div class="nb-dot on"></div><div class="nb-dot"></div>
+        </div>
+        <div class="comp-label">N.BRIDGE</div>
+        <div class="comp-sub">GPA CALC</div>
+      </div>
+
+      <!-- ============ ROM — Resources ============ -->
+      <div class="mb-component" id="comp-rom"
+           data-tip="[ ROM ] Resource Hub"
+           onclick="navigate('resources.html')">
+        <div class="rom-body">
+          <div class="rom-pin-row">
+            <div class="rom-pin"></div><div class="rom-pin"></div><div class="rom-pin"></div>
+          </div>
+          <div class="rom-label-inner">ROM</div>
+          <div class="rom-label-inner" style="font-size:0.22rem;color:#aaaa00">BIOS</div>
+          <div class="rom-pin-row">
+            <div class="rom-pin"></div><div class="rom-pin"></div><div class="rom-pin"></div>
+          </div>
+        </div>
+        <div class="comp-label">ROM</div>
+        <div class="comp-sub">RESOURCES</div>
+      </div>
+
+    </div><!-- .mb-board -->
+  </div><!-- .mb-wrapper -->
+
+  <!-- Dept badges -->
+  <div class="dept-badges">
+    <span class="dept-badge">[ CS ]</span>
+    <span class="dept-badge">[ EE ]</span>
+    <span class="dept-badge">[ CpE ]</span>
+    <span class="dept-badge">[ CYBE ]</span>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span><div class="status-dot"></div> SYSTEM ONLINE</span>
+    <span>// WVU LCSEE</span>
+    <span>FALL 2026</span>
+    <span id="clock">--:--:--</span>
+  </div>
+
+</main>
+
+<script>
+  function navigate(url) {
+    document.body.classList.add('page-exit');
+    setTimeout(() => { window.location.href = url; }, 200);
+  }
+
+  // Live clock
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>

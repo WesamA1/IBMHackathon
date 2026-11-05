@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasks — WVU Home Base</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .tasks-layout {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    .tasks-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tasks-toolbar input {
+      max-width: 300px;
+      flex: 1;
+    }
+
+    /* Kanban-style columns */
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 750px) {
+      .kanban { grid-template-columns: 1fr; }
+    }
+
+    .column {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      min-height: 300px;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1.5px solid var(--border);
+    }
+
+    .column-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .column-count {
+      font-family: var(--pixel-font);
+      font-size: 0.55rem;
+      color: var(--wvu-gold);
+      background: rgba(234,170,0,0.12);
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+    }
+
+    .task-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      margin-bottom: 0.6rem;
+      cursor: grab;
+      transition: border-color 0.18s, transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+
+    .task-item:hover {
+      border-color: var(--wvu-gold);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .task-item.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+
+    .task-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+      padding-right: 1.5rem;
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .task-due {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .task-due.overdue { color: #ff7b7b; }
+
+    .task-del {
+      position: absolute;
+      top: 0.5rem; right: 0.5rem;
+      background: none; border: none;
+      color: transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: color 0.15s;
+    }
+
+    .task-item:hover .task-del { color: var(--muted); }
+    .task-del:hover { color: #ff7b7b !important; }
+
+    /* Priority dot */
+    .task-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .task-item[data-priority="high"]::before   { background: #ff7b7b; }
+    .task-item[data-priority="medium"]::before { background: var(--wvu-gold); }
+    .task-item[data-priority="low"]::before    { background: #4ade80; }
+
+    /* Drag over indicator */
+    .column.drag-over {
+      border-color: var(--wvu-gold);
+      background: rgba(234,170,0,0.04);
+    }
+
+    /* Progress summary */
+    .progress-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .progress-summary { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: var(--pixel-font);
+      font-size: 1.1rem;
+      color: var(--wvu-gold);
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--wvu-gold);
+      color: var(--wvu-dark);
+      border: none;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(234,170,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      z-index: 50;
+    }
+
+    .fab:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 6px 28px rgba(234,170,0,0.6);
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="back-btn">← Hub</a>
+  <div class="topbar-logo" style="margin-left:0.5rem">
+    <svg height="22" viewBox="0 0 287.90668 249.06667" style="vertical-align:middle;margin-right:7px;display:inline-block;flex-shrink:0">
+      <g transform="matrix(1.3333333,0,0,-1.3333333,0,249.06667)"><g transform="scale(0.1)">
+        <path fill="#EAAA00" d="m 2068.85,1867.99 h -332.91 l -19.98,-0.18 c -61.48,1.05 -83.77,-21.9 -102.23,-50.18 l -261.58,-387.69 -250.26,379.88 -8.35,12.46 c 0,0 -6.86,11.15 -18.87,11.49 v 0.02 c -0.02,0 -0.04,-0.01 -0.04,-0.01 0,0 -0.03,0.01 -0.04,0.01 v -0.02 c -12.01,-0.34 -18.87,-11.49 -18.87,-11.49 l -8.36,-12.46 -242.087,-379.88 -269.75,387.69 c -18.437,28.28 -40.726,51.23 -102.222,50.18 l -19.988,0.18 H 80.4141 L 80.3125,1551.48 H 276.363 c 41.27,0.41 60.43,-1.54 88.739,-35.52 l 11.738,-17.24 395.609,-619.814 c 0,0 12.883,-19.976 34.735,-20.086 23.578,-0.101 36.648,20.188 36.648,20.188 l 230.758,345.742 v -0.01 l 0.04,0.06 0.04,-0.06 v 0.01 l 239.59,-345.305 c 0,0 13.53,-20.465 33.86,-20.957 21.85,-0.539 33.89,20.481 33.89,20.481 l 390.41,619.751 11.74,17.24 c 20.18,31.69 45.76,35.01 87.03,34.59 l 197.66,0.93 v 316.51"/>
+        <path fill="#EAAA00" d="M 1566.86,981.309 1353.46,642.91 1078.71,1041.59 867.063,730.289 1313.07,30.5313 c 15.39,-26.30083 27.59,-30.222706 33.88,-30.50005 13.47,-0.589844 21.25,6.62891 35.93,31.08985 L 1733.09,670.18 c 31.16,55.441 83.18,54.73 83.18,54.73 h 252.58 v 316.12 h -394.28 c -71.8,0 -107.71,-59.721 -107.71,-59.721"/>
+      </g></g>
+    </svg>
+    LCSEE <span>// TASKS</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html"      class="nav-pill">[ HUB ]</a>
+    <a href="updates.html"    class="nav-pill">[ UPDATES ]</a>
+    <a href="flashcards.html" class="nav-pill">[ CARDS ]</a>
+    <a href="tasks.html"      class="nav-pill active">[ TASKS ]</a>
+    <a href="planner.html"    class="nav-pill">[ PLANNER ]</a>
+    <a href="gpa.html"        class="nav-pill">[ GPA ]</a>
+    <a href="resources.html"  class="nav-pill">[ RESOURCES ]</a>
+  </nav>
+</header>
+
+<div class="page-header" style="max-width:960px;margin:0 auto;padding:1.5rem 1.5rem 1rem">
+  <h1>✅ Task Manager</h1>
+  <p>Track your assignments, projects, and to-dos across all courses</p>
+</div>
+
+<div class="tasks-layout">
+
+  <!-- Stats -->
+  <div class="progress-summary" id="statBar"></div>
+
+  <!-- Toolbar -->
+  <div class="tasks-toolbar">
+    <input type="text" id="taskSearch" placeholder="Search tasks…" oninput="renderBoard()" />
+    <select id="filterPriority" onchange="renderBoard()" style="max-width:160px">
+      <option value="">All Priorities</option>
+      <option value="high">🔴 High</option>
+      <option value="medium">🟡 Medium</option>
+      <option value="low">🟢 Low</option>
+    </select>
+    <select id="filterDept" onchange="renderBoard()" style="max-width:140px">
+      <option value="">All Depts</option>
+      <option value="cs">Computer Science</option>
+      <option value="ee">Electrical Engineering</option>
+      <option value="cpe">Computer Engineering</option>
+      <option value="cybe">Cyber Security</option>
+    </select>
+  </div>
+
+  <!-- Kanban -->
+  <div class="kanban">
+    <div class="column" id="col-todo"
+         ondragover="onDragOver(event,'todo')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'todo')">
+      <div class="column-header">
+        <span class="column-title">📋 To Do <span class="column-count" id="cnt-todo">0</span></span>
+      </div>
+      <div id="list-todo"></div>
+    </div>
+    <div class="column" id="col-inprogress"
+         ondragover="onDragOver(event,'inprogress')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'inprogress')">
+      <div class="column-header">
+        <span class="column-title">⚡ In Progress <span class="column-count" id="cnt-inprogress">0</span></span>
+      </div>
+      <div id="list-inprogress"></div>
+    </div>
+    <div class="column" id="col-done"
+         ondragover="onDragOver(event,'done')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'done')">
+      <div class="column-header">
+        <span class="column-title">✅ Done <span class="column-count" id="cnt-done">0</span></span>
+      </div>
+      <div id="list-done"></div>
+    </div>
+  </div>
+</div>
+
+<button class="fab" onclick="openModal()" title="Add Task">+</button>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>New Task</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Task Title</label>
+      <input type="text" id="tTitle" placeholder="e.g. Finish lab report" />
+    </div>
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="tNotes" placeholder="Any extra details…" style="min-height:60px"></textarea>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Major</label>
+        <select id="tDept">
+          <option value="cs">Computer Science</option>
+          <option value="ee">Electrical Engineering</option>
+          <option value="cpe">Computer Engineering</option>
+          <option value="cybe">Cyber Security</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="tPriority">
+          <option value="medium">Medium</option>
+          <option value="high">High 🔴</option>
+          <option value="low">Low 🟢</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="tDue" />
+      </div>
+      <div class="form-group">
+        <label>Course</label>
+        <input type="text" id="tCourse" placeholder="e.g. ECE 341" />
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn-gold" onclick="addTask()">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { api, apiError } from './api.js';
+
+let tasks = [];
+let dragging = null;
+
+async function loadBoard() {
+  const q     = document.getElementById('taskSearch').value.trim();
+  const pFilt = document.getElementById('filterPriority').value;
+  const dFilt = document.getElementById('filterDept').value;
+  const params = new URLSearchParams();
+  if (q)     params.set('search', q);
+  if (pFilt) params.set('priority', pFilt);
+  if (dFilt) params.set('major', dFilt);
+  try {
+    tasks = await api.get(`/tasks?${params}`);
+    renderBoard();
+  } catch(e) { apiError(e); }
+}
+window.renderBoard = loadBoard;
+
+function renderBoard() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  ['todo','inprogress','done'].forEach(status => {
+    const col = tasks.filter(t => t.status === status);
+    document.getElementById(`cnt-${status}`).textContent = col.length;
+    document.getElementById(`list-${status}`).innerHTML = col.length
+      ? col.map(renderTask).join('')
+      : `<div style="color:var(--muted);font-size:0.8rem;text-align:center;padding:1.5rem 0">Drop tasks here</div>`;
+  });
+  const total   = tasks.length;
+  const done    = tasks.filter(t => t.status === 'done').length;
+  const overdue = tasks.filter(t => t.status !== 'done' && t.due_date && new Date(t.due_date+'T12:00') < now).length;
+  const high    = tasks.filter(t => t.priority === 'high' && t.status !== 'done').length;
+  document.getElementById('statBar').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#44ff88">${done}</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#ff5555">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#ffa07a">${high}</div><div class="stat-label">High Priority</div></div>`;
+}
+
+function renderTask(t) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const due = t.due_date ? new Date(t.due_date + 'T12:00') : null;
+  const overdue = due && due < now && t.status !== 'done';
+  const dueFmt = due ? due.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+  return `
+    <div class="task-item" data-id="${t.id}" data-priority="${t.priority}"
+         draggable="true" ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)">
+      <button class="task-del" onclick="deleteTask(${t.id})">✕</button>
+      <div class="task-title">${t.title}</div>
+      ${t.course ? `<div style="font-size:0.74rem;color:var(--muted)">${t.course}</div>` : ''}
+      <div class="task-meta">
+        <span class="tag">${(t.major||'').toUpperCase()}</span>
+        <span class="tag ${t.priority==='high'?'red':t.priority==='low'?'green':''}">${t.priority}</span>
+        ${dueFmt ? `<span class="task-due ${overdue?'overdue':''}">📅 ${dueFmt}${overdue?' ⚠':''}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+async function deleteTask(id) {
+  try { await api.delete(`/tasks/${id}`); await loadBoard(); } catch(e) { apiError(e); }
+}
+window.deleteTask = deleteTask;
+
+// Drag & Drop
+function onDragStart(e, id) {
+  dragging = id;
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+  e.dataTransfer.effectAllowed = 'move';
+}
+window.onDragStart = onDragStart;
+
+function onDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+}
+window.onDragEnd = onDragEnd;
+
+function onDragOver(e, col) {
+  e.preventDefault();
+  document.getElementById(`col-${col}`).classList.add('drag-over');
+}
+window.onDragOver = onDragOver;
+
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+window.onDragLeave = onDragLeave;
+
+async function onDrop(e, status) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragging == null) return;
+  try {
+    await api.patch(`/tasks/${dragging}`, { status });
+    dragging = null;
+    await loadBoard();
+  } catch(e) { apiError(e); }
+}
+window.onDrop = onDrop;
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('tDue').value = new Date().toISOString().slice(0,10);
+}
+window.openModal = openModal;
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+window.closeModal = closeModal;
+
+async function addTask() {
+  const title = document.getElementById('tTitle').value.trim();
+  if (!title) { alert('Enter a task title.'); return; }
+  try {
+    await api.post('/tasks', {
+      title,
+      notes:    document.getElementById('tNotes').value.trim() || null,
+      major:    document.getElementById('tDept').value,
+      priority: document.getElementById('tPriority').value,
+      status:   'todo',
+      due_date: document.getElementById('tDue').value || null,
+      course:   document.getElementById('tCourse').value.trim() || null,
+    });
+    closeModal();
+    ['tTitle','tNotes','tCourse'].forEach(id => document.getElementById(id).value = '');
+    await loadBoard();
+  } catch(e) { apiError(e); }
+}
+window.addTask = addTask;
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+loadBoard();
+</script>
+</body>
+</html>

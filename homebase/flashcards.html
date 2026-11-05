@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards — WVU Home Base</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .fc-layout {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    /* Deck list */
+    .decks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .deck-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem;
+      cursor: pointer;
+      transition: all 0.18s;
+      position: relative;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .deck-card:hover {
+      border-color: var(--wvu-gold);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(234,170,0,0.15);
+    }
+
+    .deck-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .deck-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+
+    .deck-count {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: auto;
+    }
+
+    .deck-del {
+      position: absolute;
+      top: 0.5rem; right: 0.6rem;
+      background: none; border: none;
+      color: transparent;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .deck-card:hover .deck-del { color: var(--muted); }
+    .deck-del:hover { color: #ff7b7b !important; }
+
+    /* Study view */
+    .study-view { display: none; }
+    .study-view.open { display: block; }
+    .decks-view.hidden { display: none; }
+
+    /* Card flipper */
+    .flipper-wrap {
+      perspective: 1200px;
+      max-width: 520px;
+      margin: 1.5rem auto;
+      aspect-ratio: 5/3;
+      cursor: pointer;
+    }
+
+    .flipper {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+    }
+
+    .flipper.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .card-front {
+      background: linear-gradient(135deg, var(--wvu-dark), var(--wvu-light-blue));
+      border: 2px solid var(--wvu-gold);
+    }
+
+    .card-back {
+      background: linear-gradient(135deg, #0f1a0f, #1a3a1a);
+      border: 2px solid #4ade80;
+      transform: rotateY(180deg);
+    }
+
+    .card-face-text {
+      font-size: clamp(0.95rem, 2.5vw, 1.3rem);
+      font-weight: 600;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .card-face-label {
+      position: absolute;
+      top: 0.75rem; left: 1rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+
+    .study-controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .study-progress {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .progress-bar-wrap {
+      max-width: 520px;
+      margin: 0.75rem auto 0;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--wvu-gold);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    /* Score */
+    .score-display {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .score-item {
+      text-align: center;
+    }
+
+    .score-num {
+      font-family: var(--pixel-font);
+      font-size: 1.2rem;
+      color: var(--wvu-gold);
+    }
+
+    .score-num.green { color: #4ade80; }
+    .score-num.red   { color: #ff7b7b; }
+
+    .score-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Section toggle */
+    .section-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="back-btn">← Hub</a>
+  <div class="topbar-logo" style="margin-left:0.5rem">
+    <svg height="22" viewBox="0 0 287.90668 249.06667" style="vertical-align:middle;margin-right:7px;display:inline-block;flex-shrink:0">
+      <g transform="matrix(1.3333333,0,0,-1.3333333,0,249.06667)"><g transform="scale(0.1)">
+        <path fill="#EAAA00" d="m 2068.85,1867.99 h -332.91 l -19.98,-0.18 c -61.48,1.05 -83.77,-21.9 -102.23,-50.18 l -261.58,-387.69 -250.26,379.88 -8.35,12.46 c 0,0 -6.86,11.15 -18.87,11.49 v 0.02 c -0.02,0 -0.04,-0.01 -0.04,-0.01 0,0 -0.03,0.01 -0.04,0.01 v -0.02 c -12.01,-0.34 -18.87,-11.49 -18.87,-11.49 l -8.36,-12.46 -242.087,-379.88 -269.75,387.69 c -18.437,28.28 -40.726,51.23 -102.222,50.18 l -19.988,0.18 H 80.4141 L 80.3125,1551.48 H 276.363 c 41.27,0.41 60.43,-1.54 88.739,-35.52 l 11.738,-17.24 395.609,-619.814 c 0,0 12.883,-19.976 34.735,-20.086 23.578,-0.101 36.648,20.188 36.648,20.188 l 230.758,345.742 v -0.01 l 0.04,0.06 0.04,-0.06 v 0.01 l 239.59,-345.305 c 0,0 13.53,-20.465 33.86,-20.957 21.85,-0.539 33.89,20.481 33.89,20.481 l 390.41,619.751 11.74,17.24 c 20.18,31.69 45.76,35.01 87.03,34.59 l 197.66,0.93 v 316.51"/>
+        <path fill="#EAAA00" d="M 1566.86,981.309 1353.46,642.91 1078.71,1041.59 867.063,730.289 1313.07,30.5313 c 15.39,-26.30083 27.59,-30.222706 33.88,-30.50005 13.47,-0.589844 21.25,6.62891 35.93,31.08985 L 1733.09,670.18 c 31.16,55.441 83.18,54.73 83.18,54.73 h 252.58 v 316.12 h -394.28 c -71.8,0 -107.71,-59.721 -107.71,-59.721"/>
+      </g></g>
+    </svg>
+    LCSEE <span>// FLASHCARDS</span>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html"      class="nav-pill">[ HUB ]</a>
+    <a href="updates.html"    class="nav-pill">[ UPDATES ]</a>
+    <a href="flashcards.html" class="nav-pill active">[ CARDS ]</a>
+    <a href="tasks.html"      class="nav-pill">[ TASKS ]</a>
+    <a href="planner.html"    class="nav-pill">[ PLANNER ]</a>
+    <a href="gpa.html"        class="nav-pill">[ GPA ]</a>
+    <a href="resources.html"  class="nav-pill">[ RESOURCES ]</a>
+  </nav>
+</header>
+
+<div class="page-header" style="max-width:1000px;margin:0 auto;padding:1.5rem 1.5rem 1rem">
+  <h1>🃏 Flashcard Studio</h1>
+  <p>Create decks, study, and track your progress</p>
+</div>
+
+<div class="fc-layout">
+
+  <!-- Decks View -->
+  <div class="decks-view" id="decksView">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+      <h2 style="font-size:0.9rem;font-weight:700;color:var(--muted)">YOUR DECKS</h2>
+      <button class="btn-gold" onclick="openNewDeckModal()">+ New Deck</button>
+    </div>
+    <div class="decks-grid" id="decksGrid"></div>
+  </div>
+
+  <!-- Study View -->
+  <div class="study-view" id="studyView">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap">
+      <button class="btn-outline" onclick="exitStudy()">← Back to Decks</button>
+      <h2 id="studyDeckName" style="font-size:1rem;font-weight:700;color:var(--wvu-gold)"></h2>
+      <button class="btn-outline" style="margin-left:auto" onclick="openAddCardModal()">+ Add Card</button>
+    </div>
+
+    <div class="section-toggle">
+      <button class="btn-gold" id="btnStudy" onclick="setMode('study')">📖 Study</button>
+      <button class="btn-outline" id="btnManage" onclick="setMode('manage')">⚙️ Manage Cards</button>
+    </div>
+
+    <!-- Study mode -->
+    <div id="studyModeView">
+      <div class="score-display">
+        <div class="score-item">
+          <div class="score-num" id="scoreTotal">0</div>
+          <div class="score-label">Total</div>
+        </div>
+        <div class="score-item">
+          <div class="score-num green" id="scoreGot">0</div>
+          <div class="score-label">Got It</div>
+        </div>
+        <div class="score-item">
+          <div class="score-num red" id="scoreMissed">0</div>
+          <div class="score-label">Missed</div>
+        </div>
+      </div>
+
+      <div class="flipper-wrap" onclick="flipCard()" id="flipperWrap">
+        <div class="flipper" id="flipper">
+          <div class="card-face card-front">
+            <span class="card-face-label">Question</span>
+            <div class="card-face-text" id="cardFront">—</div>
+          </div>
+          <div class="card-face card-back">
+            <span class="card-face-label">Answer</span>
+            <div class="card-face-text" id="cardBack">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+
+      <div class="study-progress" id="studyProgress">Click the card to flip it</div>
+
+      <div class="study-controls" id="studyControls" style="display:none">
+        <button class="btn-outline" style="border-color:#ff7b7b;color:#ff7b7b" onclick="markCard(false)">✗ Still Learning</button>
+        <button class="btn-outline" onclick="flipCard()">↩ Flip Again</button>
+        <button class="btn-gold" onclick="markCard(true)">✓ Got It</button>
+      </div>
+
+      <div style="display:flex;justify-content:center;gap:1rem;margin-top:1.5rem;flex-wrap:wrap">
+        <button class="btn-outline" onclick="prevCard()">← Prev</button>
+        <button class="btn-outline" onclick="shuffleCards()">🔀 Shuffle</button>
+        <button class="btn-outline" onclick="resetStudy()">↺ Restart</button>
+        <button class="btn-outline" onclick="nextCard()">Next →</button>
+      </div>
+    </div>
+
+    <!-- Manage mode -->
+    <div id="manageModeView" style="display:none">
+      <div class="feed" id="cardsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- New Deck Modal -->
+<div class="modal-overlay" id="newDeckModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>New Deck</h2>
+      <button class="modal-close" onclick="closeNewDeckModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Deck Name</label>
+      <input type="text" id="deckName" placeholder="e.g. Digital Logic Final" />
+    </div>
+    <div class="form-group">
+      <label>Subject / Emoji Icon</label>
+      <input type="text" id="deckIcon" placeholder="📘" maxlength="2" style="max-width:80px" />
+    </div>
+    <div class="form-group">
+      <label>Major</label>
+      <select id="deckDept">
+        <option value="cs">Computer Science</option>
+        <option value="ee">Electrical Engineering</option>
+        <option value="cpe">Computer Engineering</option>
+        <option value="cybe">Cyber Security</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn-outline" onclick="closeNewDeckModal()">Cancel</button>
+      <button class="btn-gold" onclick="createDeck()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Card Modal -->
+<div class="modal-overlay" id="addCardModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Flashcard</h2>
+      <button class="modal-close" onclick="closeAddCardModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Question / Front</label>
+      <textarea id="cardQ" placeholder="What is the purpose of a flip-flop?"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Answer / Back</label>
+      <textarea id="cardA" placeholder="To store a single bit of state in a sequential circuit."></textarea>
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn-outline" onclick="closeAddCardModal()">Cancel</button>
+      <button class="btn-gold" onclick="addCard()">Add Card</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { api, apiError } from './api.js';
+
+// Normalize API card shape → internal shape used by render functions
+function normalizeCard(c) {
+  return { id: c.id, q: c.question, a: c.answer,
+           times_seen: c.times_seen, times_correct: c.times_correct,
+           ease_factor: c.ease_factor, interval_days: c.interval_days,
+           next_review_date: c.next_review_date };
+}
+
+// Normalize API deck shape (major → dept for tag display)
+function normalizeDeck(d) {
+  return { id: d.id, name: d.name, icon: d.icon || '📘',
+           dept: d.major || '', cards: (d.cards || []).map(normalizeCard) };
+}
+
+let decks        = [];
+let activeDeckId = null;
+let studyCards   = [];
+let cardIndex    = 0;
+let isFlipped    = false;
+let gotIt        = 0;
+let missed       = 0;
+let currentMode  = 'study';
+
+async function loadDecks() {
+  try {
+    const raw = await api.get('/flashcards/decks');
+    decks = raw.map(normalizeDeck);
+    renderDecks();
+  } catch (err) { apiError(err); }
+}
+
+function renderDecks() {
+  const grid = document.getElementById('decksGrid');
+  if (!decks.length) {
+    grid.innerHTML = '<div class="empty-state"><span class="icon">🃏</span>No decks yet. Create one!</div>';
+    return;
+  }
+  grid.innerHTML = decks.map(d => `
+    <div class="deck-card" onclick="openDeck(${d.id})">
+      <button class="deck-del" onclick="event.stopPropagation();deleteDeck(${d.id})">✕</button>
+      <div class="deck-icon">${d.icon || '📘'}</div>
+      <div class="deck-name">${d.name}</div>
+      <span class="tag" style="margin-bottom:0.4rem">${(d.dept || '').toUpperCase()}</span>
+      <div class="deck-count">${d.cards.length} card${d.cards.length !== 1 ? 's' : ''}</div>
+    </div>
+  `).join('');
+}
+
+async function deleteDeck(id) {
+  if (!confirm('Delete this deck?')) return;
+  try {
+    await api.delete(`/flashcards/decks/${id}`);
+    decks = decks.filter(d => d.id !== id);
+    renderDecks();
+  } catch (err) { apiError(err); }
+}
+
+function openDeck(id) {
+  activeDeckId = id;
+  const deck = decks.find(d => d.id === id);
+  document.getElementById('studyDeckName').textContent = `${deck.icon || ''} ${deck.name}`;
+  document.getElementById('decksView').classList.add('hidden');
+  document.getElementById('studyView').classList.add('open');
+  resetStudy();
+  setMode('study');
+}
+
+function exitStudy() {
+  activeDeckId = null;
+  document.getElementById('decksView').classList.remove('hidden');
+  document.getElementById('studyView').classList.remove('open');
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('studyModeView').style.display  = mode === 'study'  ? '' : 'none';
+  document.getElementById('manageModeView').style.display = mode === 'manage' ? '' : 'none';
+  document.getElementById('btnStudy').className  = mode === 'study'  ? 'btn-gold'    : 'btn-outline';
+  document.getElementById('btnManage').className = mode === 'manage' ? 'btn-gold'    : 'btn-outline';
+  if (mode === 'manage') renderCardsList();
+}
+
+function renderCardsList() {
+  const deck = decks.find(d => d.id === activeDeckId);
+  const el   = document.getElementById('cardsList');
+  if (!deck.cards.length) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">🃏</span>No cards yet. Add some!</div>';
+    return;
+  }
+  el.innerHTML = deck.cards.map(c => `
+    <div class="card" style="margin-bottom:0.75rem">
+      <div style="font-weight:600;margin-bottom:0.35rem">${c.q}</div>
+      <div style="color:var(--muted);font-size:0.85rem">${c.a}</div>
+      <div style="margin-top:0.75rem;display:flex;justify-content:flex-end">
+        <button onclick="deleteCard(${c.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem" onmouseover="this.style.color='#ff7b7b'" onmouseout="this.style.color='var(--muted)'">🗑 Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function deleteCard(cid) {
+  try {
+    await api.delete(`/flashcards/cards/${cid}`);
+    const deck = decks.find(d => d.id === activeDeckId);
+    deck.cards = deck.cards.filter(c => c.id !== cid);
+    renderCardsList();
+  } catch (err) { apiError(err); }
+}
+
+function resetStudy() {
+  const deck = decks.find(d => d.id === activeDeckId);
+  studyCards = [...(deck?.cards || [])];
+  cardIndex  = 0;
+  gotIt      = 0;
+  missed     = 0;
+  isFlipped  = false;
+  updateScores();
+  showCurrentCard();
+}
+
+function shuffleCards() {
+  for (let i = studyCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [studyCards[i], studyCards[j]] = [studyCards[j], studyCards[i]];
+  }
+  cardIndex = 0;
+  isFlipped = false;
+  showCurrentCard();
+}
+
+function showCurrentCard() {
+  if (!studyCards.length) {
+    document.getElementById('cardFront').textContent = 'No cards in this deck!';
+    document.getElementById('cardBack').textContent  = 'Add some cards to study.';
+    document.getElementById('studyProgress').textContent = 'Add cards to begin';
+    return;
+  }
+  const c = studyCards[cardIndex];
+  document.getElementById('cardFront').textContent = c.q;
+  document.getElementById('cardBack').textContent  = c.a;
+  document.getElementById('flipper').classList.remove('flipped');
+  document.getElementById('studyControls').style.display = 'none';
+  isFlipped = false;
+  document.getElementById('studyProgress').textContent = `Card ${cardIndex + 1} of ${studyCards.length} — click to reveal answer`;
+  document.getElementById('progressFill').style.width = `${((cardIndex + 1) / studyCards.length) * 100}%`;
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('flipper').classList.toggle('flipped', isFlipped);
+  document.getElementById('studyControls').style.display = isFlipped ? 'flex' : 'none';
+  if (isFlipped) document.getElementById('studyProgress').textContent = 'Did you get it?';
+}
+
+async function markCard(correct) {
+  if (correct) gotIt++; else missed++;
+  updateScores();
+  const card = studyCards[cardIndex];
+  try {
+    await api.post(`/flashcards/cards/${card.id}/review`, { correct, rating: correct ? 4 : 2 });
+  } catch (err) { apiError(err); }
+  nextCard();
+}
+
+function updateScores() {
+  document.getElementById('scoreTotal').textContent  = studyCards.length;
+  document.getElementById('scoreGot').textContent    = gotIt;
+  document.getElementById('scoreMissed').textContent = missed;
+}
+
+function nextCard() {
+  if (cardIndex < studyCards.length - 1) {
+    cardIndex++;
+    isFlipped = false;
+    showCurrentCard();
+  } else {
+    document.getElementById('studyProgress').textContent = `🎉 Deck complete! Got ${gotIt}/${studyCards.length}`;
+    document.getElementById('studyControls').style.display = 'none';
+  }
+}
+
+function prevCard() {
+  if (cardIndex > 0) { cardIndex--; isFlipped = false; showCurrentCard(); }
+}
+
+// Modal helpers
+function openNewDeckModal()  { document.getElementById('newDeckModal').classList.add('open'); }
+function closeNewDeckModal() { document.getElementById('newDeckModal').classList.remove('open'); }
+function openAddCardModal()  { document.getElementById('addCardModal').classList.add('open'); }
+function closeAddCardModal() { document.getElementById('addCardModal').classList.remove('open'); }
+
+async function createDeck() {
+  const name = document.getElementById('deckName').value.trim();
+  if (!name) { alert('Enter a deck name.'); return; }
+  try {
+    const raw = await api.post('/flashcards/decks', {
+      name,
+      icon:  document.getElementById('deckIcon').value || '📘',
+      major: document.getElementById('deckDept').value,
+    });
+    decks.push(normalizeDeck(raw));
+    closeNewDeckModal();
+    renderDecks();
+    document.getElementById('deckName').value = '';
+    document.getElementById('deckIcon').value = '';
+  } catch (err) { apiError(err); }
+}
+
+async function addCard() {
+  const q = document.getElementById('cardQ').value.trim();
+  const a = document.getElementById('cardA').value.trim();
+  if (!q || !a) { alert('Enter both question and answer.'); return; }
+  try {
+    const raw = await api.post(`/flashcards/decks/${activeDeckId}/cards`, { question: q, answer: a });
+    const deck = decks.find(d => d.id === activeDeckId);
+    deck.cards.push(normalizeCard(raw));
+    closeAddCardModal();
+    document.getElementById('cardQ').value = '';
+    document.getElementById('cardA').value = '';
+    resetStudy();
+    if (currentMode === 'manage') renderCardsList();
+  } catch (err) { apiError(err); }
+}
+
+// Expose functions called by inline onclick handlers
+window.openDeck        = openDeck;
+window.deleteDeck      = deleteDeck;
+window.exitStudy       = exitStudy;
+window.setMode         = setMode;
+window.deleteCard      = deleteCard;
+window.resetStudy      = resetStudy;
+window.shuffleCards    = shuffleCards;
+window.flipCard        = flipCard;
+window.markCard        = markCard;
+window.nextCard        = nextCard;
+window.prevCard        = prevCard;
+window.openNewDeckModal  = openNewDeckModal;
+window.closeNewDeckModal = closeNewDeckModal;
+window.openAddCardModal  = openAddCardModal;
+window.closeAddCardModal = closeAddCardModal;
+window.createDeck      = createDeck;
+window.addCard         = addCard;
+
+[document.getElementById('newDeckModal'), document.getElementById('addCardModal')].forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+loadDecks();
+</script>
+</body>
+</html>
