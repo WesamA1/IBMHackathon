@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="style.css" />
   <style>
     .planner-layout {
-      max-width: 1100px;
+      max-width: min(1600px, 96vw);
       margin: 0 auto;
       padding: 0 1.5rem 3rem;
       display: grid;
-      grid-template-columns: 1fr 300px;
+      grid-template-columns: 260px 1fr;
       gap: 1.5rem;
     }
 
@@ -24,30 +24,31 @@
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 12px;
-      padding: 1.25rem;
+      padding: 0.75rem;
     }
 
     .cal-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 1rem;
+      margin-bottom: 0.6rem;
     }
 
     .cal-month {
       font-family: var(--pixel-font);
-      font-size: 0.7rem;
+      font-size: 0.58rem;
       color: var(--wvu-gold);
+      white-space: nowrap;
     }
 
     .cal-nav {
       background: none;
       border: 1.5px solid var(--border);
       color: var(--text);
-      width: 32px; height: 32px;
+      width: 30px; height: 30px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -59,25 +60,25 @@
     .cal-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
+      gap: 2px;
     }
 
     .cal-day-name {
       text-align: center;
-      font-size: 0.65rem;
+      font-size: 0.5rem;
       font-weight: 700;
       color: var(--muted);
-      padding-bottom: 0.4rem;
+      padding-bottom: 0.25rem;
       text-transform: uppercase;
     }
 
     .cal-day {
-      aspect-ratio: 1;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
       position: relative;
@@ -118,7 +119,7 @@
     }
 
     .cal-event-dot {
-      width: 5px; height: 5px;
+      width: 4px; height: 4px;
       border-radius: 50%;
       flex-shrink: 0;
     }
@@ -339,7 +340,7 @@
   </nav>
 </header>
 
-<div class="page-header" style="max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 1rem">
+<div class="page-header" style="max-width:min(1600px,96vw);margin:0 auto;padding:1.5rem 1.5rem 1rem">
   <h1>CLOCK SCHEDULER</h1>
   <p>Schedule classes, deadlines, meetings, and personal events</p>
 </div>
