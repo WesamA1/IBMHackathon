@@ -235,7 +235,10 @@
   <div class="decks-view" id="decksView">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
       <h2 style="font-size:0.9rem;font-weight:700;color:var(--muted)">YOUR DECKS</h2>
-      <button class="btn-gold" onclick="openNewDeckModal()">+ New Deck</button>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn-outline" onclick="openImportModal()" title="Generate cards from notes using AI">🤖 Import Notes</button>
+        <button class="btn-gold" onclick="openNewDeckModal()">+ New Deck</button>
+      </div>
     </div>
     <div class="decks-grid" id="decksGrid"></div>
   </div>
@@ -342,6 +345,67 @@
 </div>
 
 <!-- Add Card Modal -->
+<!-- ── Import Notes Modal ──────────────────────────────────────────── -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2>🤖 IMPORT NOTES</h2>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+
+    <!-- Input type tabs -->
+    <div style="display:flex;gap:0.4rem;margin-bottom:1rem">
+      <button id="tabText" class="btn-gold"    style="flex:1;font-size:0.45rem" onclick="setImportTab('text')">📝 Paste Text</button>
+      <button id="tabPdf"  class="btn-outline" style="flex:1;font-size:0.45rem" onclick="setImportTab('pdf')">📄 Upload PDF</button>
+    </div>
+
+    <!-- Paste text panel -->
+    <div id="importPanelText">
+      <div class="form-group">
+        <label>Notes / Text</label>
+        <textarea id="importNotes" placeholder="Paste your lecture notes, slides, or reading summaries here…" style="min-height:150px;font-family:inherit;font-size:0.78rem"></textarea>
+      </div>
+    </div>
+
+    <!-- PDF upload panel -->
+    <div id="importPanelPdf" style="display:none">
+      <div class="form-group">
+        <label>PDF File</label>
+        <input type="file" id="importPdfFile" accept=".pdf"
+               style="color:var(--text);font-size:0.78rem;padding:0.4rem 0" />
+        <div style="font-size:0.42rem;color:var(--muted);margin-top:0.3rem">Text-based PDFs only — scanned/image PDFs are not supported.</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>New Deck Name</label>
+        <input type="text" id="importDeckName" placeholder="e.g. OS Midterm Notes" value="Generated Deck" />
+      </div>
+      <div class="form-group">
+        <label>Major</label>
+        <select id="importDept">
+          <option value="cs">Computer Science</option>
+          <option value="ee">Electrical Engineering</option>
+          <option value="cpe">Computer Engineering</option>
+          <option value="cybe">Cyber Security</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Add to existing deck instead? (optional)</label>
+      <select id="importTargetDeck">
+        <option value="">— Create new deck —</option>
+      </select>
+    </div>
+    <div id="importStatus" style="display:none;font-size:0.48rem;color:var(--wvu-gold);letter-spacing:1px;padding:0.5rem 0;text-align:center"></div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn-outline" onclick="closeImportModal()">Cancel</button>
+      <button class="btn-gold" id="importBtn" onclick="runImport()">Generate Cards</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="addCardModal">
   <div class="modal">
     <div class="modal-header">
@@ -590,6 +654,103 @@ async function addCard() {
   } catch (err) { apiError(err); }
 }
 
+// ── Import Notes ───────────────────────────────────────────────────────────
+
+let importTab = 'text';
+
+function setImportTab(tab) {
+  importTab = tab;
+  document.getElementById('importPanelText').style.display = tab === 'text' ? '' : 'none';
+  document.getElementById('importPanelPdf').style.display  = tab === 'pdf'  ? '' : 'none';
+  document.getElementById('tabText').className = tab === 'text' ? 'btn-gold'    : 'btn-outline';
+  document.getElementById('tabPdf').className  = tab === 'pdf'  ? 'btn-gold'    : 'btn-outline';
+  document.getElementById('tabText').style.flex = '1';
+  document.getElementById('tabPdf').style.flex  = '1';
+  document.getElementById('tabText').style.fontSize = '0.45rem';
+  document.getElementById('tabPdf').style.fontSize  = '0.45rem';
+}
+
+function openImportModal() {
+  const sel = document.getElementById('importTargetDeck');
+  sel.innerHTML = '<option value="">— Create new deck —</option>' +
+    decks.map(d => `<option value="${d.id}">${d.icon || ''} ${d.name}</option>`).join('');
+  document.getElementById('importStatus').style.display = 'none';
+  document.getElementById('importBtn').disabled = false;
+  document.getElementById('importBtn').textContent = 'Generate Cards';
+  setImportTab('text');
+  document.getElementById('importModal').classList.add('open');
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('open');
+}
+
+async function _finishImport(fetchPromise, statusEl, btn) {
+  try {
+    const result = await fetchPromise;
+    statusEl.style.color = '#44ff88';
+    statusEl.textContent = `✓ ${result.cards_created} cards generated!`;
+    await loadDecks();
+    setTimeout(() => {
+      closeImportModal();
+      document.getElementById('importNotes').value = '';
+      document.getElementById('importPdfFile').value = '';
+      openDeck(result.deck_id);
+    }, 900);
+  } catch (err) {
+    statusEl.style.color      = '#ff5555';
+    statusEl.style.whiteSpace = 'pre-wrap';
+    statusEl.style.textAlign  = 'left';
+    statusEl.textContent      = `✗ ${err.message}`;
+    btn.disabled              = false;
+    btn.textContent           = 'Generate Cards';
+  }
+}
+
+async function runImport() {
+  const deckName  = document.getElementById('importDeckName').value.trim() || 'Generated Deck';
+  const major     = document.getElementById('importDept').value;
+  const targetVal = document.getElementById('importTargetDeck').value;
+  const deckId    = targetVal ? parseInt(targetVal, 10) : null;
+
+  const statusEl = document.getElementById('importStatus');
+  const btn      = document.getElementById('importBtn');
+  statusEl.style.display = 'block';
+  statusEl.textContent   = '⏳ GENERATING FLASHCARDS…';
+  btn.disabled           = true;
+  btn.textContent        = 'Generating…';
+
+  if (importTab === 'text') {
+    const notes = document.getElementById('importNotes').value.trim();
+    if (!notes) { alert('Paste some notes first.'); btn.disabled = false; btn.textContent = 'Generate Cards'; statusEl.style.display = 'none'; return; }
+    await _finishImport(
+      api.post('/flashcards/generate', { notes, deck_name: deckName, major, ...(deckId !== null ? { deck_id: deckId } : {}) }),
+      statusEl, btn
+    );
+  } else {
+    const fileInput = document.getElementById('importPdfFile');
+    if (!fileInput.files.length) { alert('Select a PDF file first.'); btn.disabled = false; btn.textContent = 'Generate Cards'; statusEl.style.display = 'none'; return; }
+    const form = new FormData();
+    form.append('file', fileInput.files[0]);
+    form.append('deck_name', deckName);
+    form.append('major', major);
+    if (deckId !== null) form.append('deck_id', deckId);
+
+    // PDF uses multipart — call fetch directly (api.post only does JSON)
+    const BASE = (window.HB_API_URL ?? '') + '/api/v1';
+    await _finishImport(
+      fetch(`${BASE}/flashcards/generate/pdf`, { method: 'POST', body: form })
+        .then(async res => {
+          if (res.status === 204) return null;
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
+          return data;
+        }),
+      statusEl, btn
+    );
+  }
+}
+
 // Expose functions called by inline onclick handlers
 window.openDeck        = openDeck;
 window.deleteDeck      = deleteDeck;
@@ -608,8 +769,13 @@ window.openAddCardModal  = openAddCardModal;
 window.closeAddCardModal = closeAddCardModal;
 window.createDeck      = createDeck;
 window.addCard         = addCard;
+window.openImportModal  = openImportModal;
+window.closeImportModal = closeImportModal;
+window.runImport        = runImport;
+window.setImportTab     = setImportTab;
 
-[document.getElementById('newDeckModal'), document.getElementById('addCardModal')].forEach(m => {
+[document.getElementById('newDeckModal'), document.getElementById('addCardModal'),
+ document.getElementById('importModal')].forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
 

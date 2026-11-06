@@ -7,6 +7,12 @@ pydantic-settings==2.6.1
 python-dotenv==1.0.1
 python-multipart==0.0.12
 
+# AI providers for notes → flashcard generation
+ollama==0.6.3          # local, free — https://ollama.com
+groq==1.7.0            # free cloud tier — https://console.groq.com
+ibm-watsonx-ai==1.9.0  # IBM watsonx.ai (paid)
+pypdf==5.1.0           # PDF text extraction
+
 # ML / analytics (install when ready to train)
 scikit-learn==1.5.2
 numpy==2.1.3

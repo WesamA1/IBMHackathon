@@ -4,7 +4,7 @@ from typing import List
 from ..database import get_db
 from ..models import Semester, Course
 from ..schemas import (
-    SemesterCreate, SemesterRead, CourseCreate, CourseRead,
+    SemesterCreate, SemesterRead, CourseCreate, CourseUpdate, CourseRead,
     CumulativeGPA, SemesterGPA,
 )
 from ..services.gpa_service import calculate_semester_gpa, calculate_cumulative_gpa
@@ -60,11 +60,11 @@ def add_course(sem_id: int, payload: CourseCreate, db: Session = Depends(get_db)
 
 
 @router.patch("/courses/{course_id}", response_model=CourseRead)
-def update_course(course_id: int, payload: CourseCreate, db: Session = Depends(get_db)):
+def update_course(course_id: int, payload: CourseUpdate, db: Session = Depends(get_db)):
     course = db.get(Course, course_id)
     if not course:
         raise HTTPException(404, "Course not found")
-    for field, value in payload.model_dump().items():
+    for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(course, field, value)
     db.commit()
     db.refresh(course)

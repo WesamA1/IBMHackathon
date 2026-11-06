@@ -73,6 +73,18 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)):
     return ev
 
 
+@router.patch("/{event_id}", response_model=EventRead)
+def update_event(event_id: int, payload: EventCreate, db: Session = Depends(get_db)):
+    ev = db.get(Event, event_id)
+    if not ev:
+        raise HTTPException(404, "Event not found")
+    for field, value in payload.model_dump().items():
+        setattr(ev, field, value)
+    db.commit()
+    db.refresh(ev)
+    return ev
+
+
 @router.delete("/{event_id}", status_code=204)
 def delete_event(event_id: int, db: Session = Depends(get_db)):
     ev = db.get(Event, event_id)

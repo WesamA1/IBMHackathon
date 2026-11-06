@@ -143,6 +143,11 @@ class CourseBase(BaseModel):
 class CourseCreate(CourseBase):
     pass
 
+class CourseUpdate(BaseModel):
+    name:    Optional[str] = None
+    grade:   Optional[str] = Field(None, max_length=4)
+    credits: Optional[int] = Field(None, ge=1, le=6)
+
 class CourseRead(CourseBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
