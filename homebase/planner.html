@@ -108,13 +108,41 @@
 
     .cal-day.empty { cursor: default; }
 
+    /* --- Bundle B: dot row with per-type colors --- */
+    .cal-dot-row {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
     .cal-event-dot {
-      width: 4px; height: 4px;
-      background: var(--wvu-gold);
+      width: 5px; height: 5px;
       border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* type colors match event-item borders */
+    .cal-event-dot.dot-class    { background: #7b7bff; }
+    .cal-event-dot.dot-deadline { background: #ff7b7b; }
+    .cal-event-dot.dot-exam     { background: #ff9a3c; }
+    .cal-event-dot.dot-meeting  { background: #4ade80; }
+    .cal-event-dot.dot-personal { background: var(--wvu-gold); }
+
+    /* count badge when > 3 events */
+    .cal-count-badge {
+      font-size: 0.48rem;
+      font-weight: 700;
+      color: var(--wvu-gold);
+      background: rgba(234,170,0,0.15);
+      border-radius: 4px;
+      padding: 0 2px;
+      line-height: 1.4;
     }
 
     .cal-day.today .cal-event-dot { background: var(--wvu-dark); }
+    .cal-day.today .cal-count-badge { color: var(--wvu-dark); background: rgba(0,0,0,0.15); }
 
     /* Day Panel */
     .day-panel {
@@ -151,19 +179,29 @@
     .event-name { font-size: 0.88rem; font-weight: 600; }
     .event-time { font-size: 0.73rem; color: var(--muted); margin-top: 0.2rem; }
 
-    .event-del {
+    .event-actions {
       position: absolute;
-      right: 0.5rem; top: 50%;
+      right: 0.4rem; top: 50%;
       transform: translateY(-50%);
+      display: flex;
+      gap: 0.2rem;
+      align-items: center;
+    }
+
+    .event-del, .event-edit {
       background: none; border: none;
       color: transparent;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       transition: color 0.15s;
+      padding: 0.15rem 0.25rem;
+      border-radius: 4px;
     }
 
-    .event-item:hover .event-del { color: var(--muted); }
+    .event-item:hover .event-del,
+    .event-item:hover .event-edit { color: var(--muted); }
     .event-del:hover { color: #ff7b7b !important; }
+    .event-edit:hover { color: var(--wvu-gold) !important; }
 
     /* Upcoming section */
     .upcoming-section {
@@ -197,6 +235,59 @@
 
     .upcoming-month { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
     .upcoming-day   { font-family: var(--pixel-font); font-size: 0.75rem; color: var(--wvu-gold); }
+
+    /* --- Bundle C: Today button --- */
+    .cal-today-btn {
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      padding: 0 0.6rem;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.65rem;
+      font-family: var(--pixel-font);
+      letter-spacing: 0.05em;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .cal-today-btn:hover { border-color: var(--wvu-gold); color: var(--wvu-gold); }
+
+    /* --- delete-confirm dialog --- */
+    .del-dialog {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.15s;
+    }
+    .del-dialog.open { opacity: 1; pointer-events: all; }
+    .del-dialog-box {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      max-width: 340px;
+      width: 90%;
+    }
+    .del-dialog-title {
+      font-family: var(--pixel-font);
+      font-size: 0.65rem;
+      color: var(--wvu-gold);
+      margin-bottom: 0.5rem;
+    }
+    .del-dialog-msg {
+      font-size: 0.84rem;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+    .del-dialog-btns {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
 
     .fab {
       position: fixed;
@@ -260,7 +351,10 @@
     <div class="calendar-wrap">
       <div class="cal-header">
         <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
-        <div class="cal-month" id="calMonthLabel"></div>
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <div class="cal-month" id="calMonthLabel"></div>
+          <button class="cal-today-btn" onclick="goToToday()">TODAY</button>
+        </div>
         <button class="cal-nav" onclick="changeMonth(1)">›</button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
@@ -285,11 +379,11 @@
 
 <button class="fab" onclick="openAddModal()" title="Add Event">+</button>
 
-<!-- Add Event Modal -->
+<!-- Add / Edit Event Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-header">
-      <h2>Add Event</h2>
+      <h2 id="modalTitle">Add Event</h2>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="form-group">
@@ -336,7 +430,20 @@
     </div>
     <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
       <button class="btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn-gold" onclick="addEvent()">Save Event</button>
+      <button class="btn-gold" id="modalSaveBtn" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirmation dialog -->
+<div class="del-dialog" id="delDialog">
+  <div class="del-dialog-box">
+    <div class="del-dialog-title">DELETE EVENT</div>
+    <div class="del-dialog-msg" id="delDialogMsg">This is a repeating event. What would you like to delete?</div>
+    <div class="del-dialog-btns">
+      <button class="btn-outline" onclick="closeDelDialog()">Cancel</button>
+      <button class="btn-outline" id="delThisBtn" onclick="confirmDelete('this')">This occurrence</button>
+      <button class="btn-gold"    id="delAllBtn"  onclick="confirmDelete('all')">Delete all</button>
     </div>
   </div>
 </div>
@@ -348,11 +455,23 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const TYPE_LABELS = { class:'Class', deadline:'Deadline', exam:'Exam', meeting:'Meeting', personal:'Personal' };
 
+// ── Bundle B: dot color per type ──────────────────────────────────────────────
+const TYPE_DOT = { class:'dot-class', deadline:'dot-deadline', exam:'dot-exam', meeting:'dot-meeting', personal:'dot-personal' };
+
 let events = [];
 
 let viewYear  = new Date().getFullYear();
 let viewMonth = new Date().getMonth();
 let selectedDate = toISO(new Date());
+
+// ── Bundle A: edit state ──────────────────────────────────────────────────────
+let editingId   = null;   // null = add mode, number = edit mode (base event id)
+let editingDate = null;   // the specific occurrence date being edited/deleted
+
+// ── Bundle A: delete-dialog state ────────────────────────────────────────────
+let pendingDeleteId     = null;
+let pendingDeleteRepeat = null;
+let pendingDeleteDate   = null;
 
 function toISO(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -371,10 +490,24 @@ async function loadMonthEvents() {
   const start = toISO(firstDay);
   const end   = toISO(lastDay);
   try {
-    events = await api(`/api/v1/events/expand?start=${start}&end=${end}`);
+    events = await api.get(`/events/expand?start=${start}&end=${end}`);
   } catch (e) {
     console.error('Failed to load events:', apiError(e));
     events = [];
+  }
+}
+
+// ── Bundle C: also load the rolling 30-day window for Upcoming independently ──
+let upcomingEvents = [];
+async function loadUpcomingEvents() {
+  const today = new Date();
+  const end30 = new Date(); end30.setDate(today.getDate() + 30);
+  const start = toISO(today);
+  const end   = toISO(end30);
+  try {
+    upcomingEvents = await api.get(`/events/expand?start=${start}&end=${end}`);
+  } catch (e) {
+    upcomingEvents = [];
   }
 }
 
@@ -384,7 +517,16 @@ function getEventsForDate(dateStr) {
     .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
 }
 
-function hasEvents(dateStr) { return getEventsForDate(dateStr).length > 0; }
+// ── Bundle B: build dot row HTML ──────────────────────────────────────────────
+function buildDotRow(dateStr) {
+  const evs = getEventsForDate(dateStr);
+  if (!evs.length) return '';
+  const show = evs.slice(0, 3);
+  const extra = evs.length - 3;
+  let dots = show.map(ev => `<div class="cal-event-dot ${TYPE_DOT[ev.event_type] || 'dot-personal'}"></div>`).join('');
+  if (extra > 0) dots += `<div class="cal-count-badge">+${extra}</div>`;
+  return `<div class="cal-dot-row">${dots}</div>`;
+}
 
 function renderCalendar() {
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
@@ -401,11 +543,10 @@ function renderCalendar() {
     const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = dateStr === todayStr;
     const isSel   = dateStr === selectedDate;
-    const hasDot  = hasEvents(dateStr);
     html += `<div class="cal-day ${isToday?'today':''} ${isSel?'selected':''}"
                   onclick="selectDate('${dateStr}')">
                ${d}
-               ${hasDot ? '<div class="cal-event-dot"></div>' : ''}
+               ${buildDotRow(dateStr)}
              </div>`;
   }
 
@@ -431,9 +572,13 @@ function renderDayPanel() {
     return;
   }
 
+  // ── Bundle A: edit + smart delete buttons ────────────────────────────────
   el.innerHTML = evs.map(ev => `
     <div class="event-item type-${ev.event_type}">
-      <button class="event-del" onclick="deleteEvent(${ev.id})">✕</button>
+      <div class="event-actions">
+        <button class="event-edit" onclick="openEditModal(${ev.id}, '${selectedDate}')" title="Edit">✎</button>
+        <button class="event-del"  onclick="requestDelete(${ev.id}, '${ev.repeat}', '${selectedDate}')" title="Delete">✕</button>
+      </div>
       <div class="event-name">${ev.name}</div>
       <div class="event-time">
         ${ev.start_time ? `🕐 ${formatTime(ev.start_time)}${ev.end_time?' – '+formatTime(ev.end_time):''}` : ''}
@@ -446,19 +591,22 @@ function renderDayPanel() {
 }
 
 function renderUpcoming() {
-  const upcoming = [];
-  for (let i = 0; i < 30; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    const ds = toISO(d);
-    getEventsForDate(ds).forEach(ev => upcoming.push({ ...ev, _ds: ds, _d: d }));
-  }
-  const slice = upcoming.slice(0, 8);
+  // Use the independent 30-day window (Bundle C fix)
+  const today = toISO(new Date());
+  const end30 = new Date(); end30.setDate(end30.getDate() + 30);
+  const end30str = toISO(end30);
+
+  const upcoming = upcomingEvents
+    .filter(ev => ev.event_date >= today && ev.event_date <= end30str)
+    .sort((a, b) => a.event_date.localeCompare(b.event_date) || (a.start_time||'').localeCompare(b.start_time||''))
+    .slice(0, 8);
+
   const el = document.getElementById('upcomingList');
-  if (!slice.length) { el.innerHTML = '<div class="empty-state">No upcoming events</div>'; return; }
-  el.innerHTML = slice.map(ev => {
-    const m = ev._d.toLocaleDateString('en-US',{month:'short'});
-    const day = ev._d.getDate();
+  if (!upcoming.length) { el.innerHTML = '<div class="empty-state">No upcoming events</div>'; return; }
+  el.innerHTML = upcoming.map(ev => {
+    const d = new Date(ev.event_date + 'T12:00');
+    const m = d.toLocaleDateString('en-US',{month:'short'});
+    const day = d.getDate();
     return `
     <div class="upcoming-item">
       <div class="upcoming-date-box">
@@ -481,30 +629,129 @@ async function changeMonth(dir) {
   await loadMonthEvents();
   renderCalendar();
   renderDayPanel();
-  renderUpcoming();
 }
 
-async function deleteEvent(id) {
+// ── Bundle C: jump to today ───────────────────────────────────────────────────
+async function goToToday() {
+  const today = new Date();
+  viewYear  = today.getFullYear();
+  viewMonth = today.getMonth();
+  selectedDate = toISO(today);
+  await loadMonthEvents();
+  renderCalendar();
+  renderDayPanel();
+}
+
+// ── Bundle A: delete with recurrence awareness ────────────────────────────────
+function requestDelete(id, repeat, dateStr) {
+  pendingDeleteId     = id;
+  pendingDeleteRepeat = repeat;
+  pendingDeleteDate   = dateStr;
+
+  const dialog = document.getElementById('delDialog');
+  const msg    = document.getElementById('delDialogMsg');
+  const thisBtn = document.getElementById('delThisBtn');
+
+  if (repeat && repeat !== 'none') {
+    msg.textContent = 'This is a repeating event. Delete just this occurrence, or every occurrence?';
+    thisBtn.style.display = '';
+    document.getElementById('delAllBtn').textContent = 'Delete all';
+  } else {
+    msg.textContent = 'Are you sure you want to delete this event?';
+    thisBtn.style.display = 'none';
+    document.getElementById('delAllBtn').textContent = 'Delete';
+  }
+  dialog.classList.add('open');
+}
+
+function closeDelDialog() {
+  document.getElementById('delDialog').classList.remove('open');
+  pendingDeleteId = pendingDeleteRepeat = pendingDeleteDate = null;
+}
+
+async function confirmDelete(mode) {
+  const id   = pendingDeleteId;
+  const date = pendingDeleteDate;
+  closeDelDialog();
+
+  if (mode === 'this') {
+    // Create a one-off exclusion: delete the base event and re-create without
+    // that date. For now we just skip the base delete and POST a "skip" note
+    // via a simple approach: delete the whole series then re-create each
+    // occurrence except the skipped date.
+    //
+    // Simpler approach that works within the current API:
+    // We fetch the base event, delete it, then re-create it as a new event
+    // with repeat=none for every remaining occurrence (weekly up to semester end).
+    // Because the backend has no exclusion table, we fall back to the full-delete
+    // warning: user is informed that the API doesn't support single-occurrence
+    // removal yet, and they should use "Delete all" or edit instead.
+    alert('Single-occurrence deletion is not yet supported by the API. Use "Delete all" or edit the event instead.');
+    return;
+  }
+
+  // mode === 'all' — delete the base event (removes all occurrences)
   try {
-    await api(`/api/v1/events/${id}`, { method: 'DELETE' });
+    await api.delete(`/events/${id}`);
   } catch (e) {
     alert('Failed to delete event: ' + apiError(e));
     return;
   }
-  await loadMonthEvents();
+  await Promise.all([loadMonthEvents(), loadUpcomingEvents()]);
   renderCalendar();
   renderDayPanel();
   renderUpcoming();
 }
 
+// ── Bundle A: modal open/close ────────────────────────────────────────────────
 function openAddModal() {
-  document.getElementById('modal').classList.add('open');
+  editingId   = null;
+  editingDate = null;
+  document.getElementById('modalTitle').textContent = 'Add Event';
+  document.getElementById('modalSaveBtn').textContent = 'Save Event';
+  clearModalForm();
   document.getElementById('evDate').value = selectedDate || toISO(new Date());
+  document.getElementById('modal').classList.add('open');
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function openEditModal(id, dateStr) {
+  // Find the event in the currently-loaded events array
+  const ev = events.find(e => e.id === id && e.event_date === dateStr)
+            || events.find(e => e.id === id);
+  if (!ev) return;
 
-async function addEvent() {
+  editingId   = id;
+  editingDate = dateStr;
+
+  document.getElementById('modalTitle').textContent = 'Edit Event';
+  document.getElementById('modalSaveBtn').textContent = 'Update Event';
+
+  document.getElementById('evName').value     = ev.name;
+  document.getElementById('evDate').value     = ev.event_date;
+  document.getElementById('evType').value     = ev.event_type;
+  document.getElementById('evStart').value    = ev.start_time || '';
+  document.getElementById('evEnd').value      = ev.end_time   || '';
+  document.getElementById('evLocation').value = ev.location   || '';
+  document.getElementById('evRepeat').value   = ev.repeat     || 'none';
+
+  document.getElementById('modal').classList.add('open');
+}
+
+function clearModalForm() {
+  ['evName','evDate','evStart','evEnd','evLocation'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('evType').value   = 'class';
+  document.getElementById('evRepeat').value = 'none';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editingId = editingDate = null;
+}
+
+// ── Bundle A: unified save (add or edit via delete+recreate) ──────────────────
+async function saveEvent() {
   const name = document.getElementById('evName').value.trim();
   const date = document.getElementById('evDate').value;
   if (!name || !date) { alert('Name and date are required.'); return; }
@@ -512,15 +759,19 @@ async function addEvent() {
   const body = {
     name,
     event_date: date,
-    start_time: document.getElementById('evStart').value,
-    end_time:   document.getElementById('evEnd').value,
+    start_time: document.getElementById('evStart').value || null,
+    end_time:   document.getElementById('evEnd').value   || null,
     event_type: document.getElementById('evType').value,
-    location:   document.getElementById('evLocation').value.trim(),
+    location:   document.getElementById('evLocation').value.trim() || null,
     repeat:     document.getElementById('evRepeat').value,
   };
 
   try {
-    await api('/api/v1/events', { method: 'POST', body: JSON.stringify(body) });
+    if (editingId !== null) {
+      // No PATCH endpoint — delete then re-create
+      await api.delete(`/events/${editingId}`);
+    }
+    await api.post('/events', body);
   } catch (e) {
     alert('Failed to save event: ' + apiError(e));
     return;
@@ -528,27 +779,45 @@ async function addEvent() {
 
   closeModal();
   selectedDate = date;
-  await loadMonthEvents();
+  await Promise.all([loadMonthEvents(), loadUpcomingEvents()]);
   renderCalendar();
   renderDayPanel();
   renderUpcoming();
-  document.getElementById('evName').value = '';
-  document.getElementById('evLocation').value = '';
 }
+
+// ── Bundle C: keyboard shortcuts ──────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  const inInput = ['INPUT','SELECT','TEXTAREA'].includes(tag);
+  if (e.key === 'Escape') {
+    closeModal();
+    closeDelDialog();
+  }
+  if ((e.key === 'n' || e.key === 'N') && !inInput) {
+    openAddModal();
+  }
+});
 
 document.getElementById('modal').addEventListener('click', e => {
   if (e.target === document.getElementById('modal')) closeModal();
 });
+document.getElementById('delDialog').addEventListener('click', e => {
+  if (e.target === document.getElementById('delDialog')) closeDelDialog();
+});
 
-window.selectDate  = selectDate;
-window.changeMonth = changeMonth;
-window.deleteEvent = deleteEvent;
-window.openAddModal = openAddModal;
-window.closeModal  = closeModal;
-window.addEvent    = addEvent;
+window.selectDate    = selectDate;
+window.changeMonth   = changeMonth;
+window.goToToday     = goToToday;
+window.openAddModal  = openAddModal;
+window.openEditModal = openEditModal;
+window.closeModal    = closeModal;
+window.saveEvent     = saveEvent;
+window.requestDelete = requestDelete;
+window.closeDelDialog = closeDelDialog;
+window.confirmDelete = confirmDelete;
 
 async function init() {
-  await loadMonthEvents();
+  await Promise.all([loadMonthEvents(), loadUpcomingEvents()]);
   renderCalendar();
   renderDayPanel();
   renderUpcoming();

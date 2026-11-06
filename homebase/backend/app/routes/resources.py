@@ -8,7 +8,7 @@ from ..schemas import ResourceCreate, ResourceRead
 router = APIRouter(prefix="/resources", tags=["resources"])
 
 
-@router.get("/", response_model=List[ResourceRead])
+@router.get("", response_model=List[ResourceRead])
 def list_resources(
     major:    Optional[MajorEnum]         = Query(None),
     res_type: Optional[ResourceTypeEnum]  = Query(None),
@@ -22,7 +22,7 @@ def list_resources(
     return q.order_by(Resource.click_count.desc(), Resource.created_at.desc()).all()
 
 
-@router.post("/", response_model=ResourceRead, status_code=201)
+@router.post("", response_model=ResourceRead, status_code=201)
 def create_resource(payload: ResourceCreate, db: Session = Depends(get_db)):
     res = Resource(**payload.model_dump())
     db.add(res)

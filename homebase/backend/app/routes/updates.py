@@ -8,7 +8,7 @@ from ..schemas import UpdateCreate, UpdateRead
 router = APIRouter(prefix="/updates", tags=["updates"])
 
 
-@router.get("/", response_model=List[UpdateRead])
+@router.get("", response_model=List[UpdateRead])
 def list_updates(
     major:     Optional[MajorEnum]    = Query(None),
     post_type: Optional[PostTypeEnum] = Query(None),
@@ -26,7 +26,7 @@ def list_updates(
     return q.order_by(Update.created_at.desc()).all()
 
 
-@router.post("/", response_model=UpdateRead, status_code=201)
+@router.post("", response_model=UpdateRead, status_code=201)
 def create_update(payload: UpdateCreate, db: Session = Depends(get_db)):
     obj = Update(**payload.model_dump())
     db.add(obj)

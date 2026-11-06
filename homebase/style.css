@@ -38,7 +38,7 @@
   border-radius: 0 !important;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; zoom: 1.27; }
 
 /* ============= BODY / SCANLINES ============= */
 body {

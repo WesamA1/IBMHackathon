@@ -9,7 +9,7 @@ from ..schemas import EventCreate, EventRead
 router = APIRouter(prefix="/events", tags=["events"])
 
 
-@router.get("/", response_model=List[EventRead])
+@router.get("", response_model=List[EventRead])
 def list_events(
     start: Optional[date] = Query(None, description="Inclusive start date"),
     end:   Optional[date] = Query(None, description="Inclusive end date"),
@@ -64,7 +64,7 @@ def expand_events(
     return result
 
 
-@router.post("/", response_model=EventRead, status_code=201)
+@router.post("", response_model=EventRead, status_code=201)
 def create_event(payload: EventCreate, db: Session = Depends(get_db)):
     ev = Event(**payload.model_dump())
     db.add(ev)

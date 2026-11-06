@@ -11,7 +11,7 @@ from ..ml.engine import MLEngine
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.get("/", response_model=List[TaskRead])
+@router.get("", response_model=List[TaskRead])
 def list_tasks(
     status:   Optional[TaskStatusEnum]   = Query(None),
     priority: Optional[TaskPriorityEnum] = Query(None),
@@ -31,7 +31,7 @@ def list_tasks(
     return q.order_by(Task.created_at.desc()).all()
 
 
-@router.post("/", response_model=TaskRead, status_code=201)
+@router.post("", response_model=TaskRead, status_code=201)
 def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
     task = Task(**payload.model_dump())
     db.add(task)
