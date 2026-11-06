@@ -14,7 +14,8 @@ class Settings(BaseSettings):
 
     # Ollama — free, fully local, no key needed.
     # Install: https://ollama.com  then  `ollama pull granite3-moe:1b`
-    ollama_model: str = "granite3-moe:1b"
+    ollama_model: str = "granite3-moe:1b"Almu1228
+    
 
     # Groq — free cloud tier, no credit card.
     # Sign up at https://console.groq.com and create a free API key.
